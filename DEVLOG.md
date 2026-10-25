@@ -7,5 +7,5 @@ to high-level progress and test status; implementation details remain in the
 private workspace.
 
 - Runtime tests: 102 passing
-- Recompiler tests: 19 passing
+- Recompiler tests: 20 passing
 - The port is not yet playable.
