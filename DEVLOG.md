@@ -1,4 +1,4 @@
-# Development log
+﻿# Development log
 
 ## 2026-10-27
 
@@ -7,5 +7,5 @@ to high-level progress and test status; implementation details remain in the
 private workspace.
 
 - Runtime tests: 102 passing
-- Recompiler tests: 20 passing
+- Recompiler tests: 21 passing
 - The port is not yet playable.
