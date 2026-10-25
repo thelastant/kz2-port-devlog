@@ -1,5 +1,15 @@
 ﻿# Development log
 
+## 2026-10-27 — vector integer and fused arithmetic primitives
+
+- Added three more vector primitives: unsigned word add and subtract (modulo
+  32-bit lanes, no flag changes) and a fused negative multiply-subtract with
+  architecture-specified rounding and signed-zero behaviour.
+- Runtime tests: 102 passing
+- Recompiler tests: 28 passing
+- Coverage: 12,325 of 14,732 functions; 139,990 native blocks
+- The port is not yet playable.
+
 ## 2026-10-27 — vector conversion primitives
 
 - Added two vector floating-point to fixed-point conversion primitives, both

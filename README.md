@@ -19,7 +19,7 @@ same input. RPCS3 is an oracle; its code is not used.
   basic-block dispatcher and recursive direct-call import.
 - Current manifest coverage: **12,325 of 14,732 code functions** and
   **139,990 native basic blocks**.
-- Test suite: **264 passing**, **23 ignored** (real-disc tests are opt-in).
+- Test suite: **267 passing**, **23 ignored** (real-disc tests are opt-in).
 - The game is not yet playable. Menus, level scripting, the full animation
   pipeline, SPU jobs, physics, AI runtime, audio, input, saves, and settings are
   still in progress.
