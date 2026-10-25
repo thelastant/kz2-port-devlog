@@ -1,0 +1,15 @@
+# Never publish game data or derived binaries from this project.
+*.elf
+*.self
+*.sprx
+*.prx
+*.pkg
+*.sdat
+*.gbf
+*.gpr
+*.rep/
+*.psarc
+*.bin
+*.avi
+out/
+*.log

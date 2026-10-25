@@ -1,0 +1,4 @@
+#!/bin/sh
+set -e
+root="$(git rev-parse --show-toplevel)"
+python "$root/scripts/check_public_content.py"
