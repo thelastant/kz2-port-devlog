@@ -1,5 +1,16 @@
 ﻿# Development log
 
+## 2026-10-27 — doubleword rotate and hinted branches
+
+- Added a doubleword rotate-mask primitive and accepted the hinted conditional
+  branch forms, deriving the condition test from the branch's option field
+  instead of a fixed list.
+- Runtime tests: 103 passing
+- Recompiler tests: 42 passing
+- Coverage: 46,648 of 47,929 functions (97.3%); 353,518 native blocks.
+  Remaining real gaps: 912; the other 369 "gaps" are embedded data.
+- The port is not yet playable.
+
 ## 2026-10-27 — decode audit and integer arithmetic
 
 - Coverage accounting now separates real code from embedded data using the
