@@ -18,8 +18,8 @@ same input. RPCS3 is an oracle; its code is not used.
 - Native static-recompiler pipeline for the original PowerPC code, including a
   basic-block dispatcher and recursive direct-call import.
 - Boot reaches graphics initialisation, configures the display, and captures the game's
-  own command submissions (16,384 words, nine distinct methods): **4,435,979** executed
-  blocks.
+  own command submissions (16,384 words, nine distinct methods), then reaches the game's
+  own polling loop and runs to the **20,000,000**-block safety cap.
 - A runtime fallback interprets blocks the static translation does not contain, so new
   control-flow targets no longer require a full rebuild to explore.
 - Current closure: **49,070 functions** and **428,755 native basic blocks** compiled
