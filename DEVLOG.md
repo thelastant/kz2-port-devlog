@@ -1,5 +1,15 @@
 ﻿# Development log
 
+## 2026-10-27 — indexed float access and single-precision square root
+
+- Added the indexed floating-point load/store family and a single-precision
+  square root primitive; a prior label in the audit was corrected against the
+  live analysis database.
+- Runtime tests: 102 passing
+- Recompiler tests: 34 passing
+- Coverage: 12,963 of 14,732 functions; 148,296 native blocks
+- The port is not yet playable.
+
 ## 2026-10-27 — bounded function-body manifests and vector subtract
 
 - Coverage measurement is now bounded to analysed function bodies, so embedded
