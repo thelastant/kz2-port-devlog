@@ -1,5 +1,31 @@
 ﻿# Development log
 
+## 2026-10-26 - the port starts running SPU code
+
+- The port now executes the game's SPU instructions. Not simulated hardware: the
+  actual programs from the disc, one instruction at a time.
+- All twenty-three embedded programs start and run. Sixteen of them follow their
+  initialisation path all the way to a clean halt. The rest stop with a precise
+  report of the instruction that is not implemented yet - four of them, named and
+  ranked, instead of a vague failure.
+- Two mistakes were caught by running the code rather than by reading it. The
+  first: 32-bit values and addresses on an SPU live in the "preferred slot", which
+  is the most significant word of the register. Reading the low word instead made
+  an address computed by the program point at zero, so the interpreter executed
+  the program image as if it were data. The second: SPU arithmetic works on four
+  independent 32-bit lanes with no carry between them, while the reference
+  definition the table came from models a whole-register add. Following the
+  reference there would have been wrong.
+- Also fixed: the table generator had been silently dropping instructions that take
+  no operands, and was missing two branch-hint fields. The table now carries all
+  204 encodings from the source, not 198.
+- Next: the remaining instructions, of which one needs the SPU's channel interface
+  (data transfer) that does not exist yet. After that, translating these programs to
+  native code with this interpreter as the reference.
+- Runtime tests: 137 passing (one steps every encoding and requires each to run or
+  name itself)
+- PPU boot unchanged: 95,497 blocks
+- The port is not yet playable.
 ## 2026-10-26 - the executable contains 23 SPU programs, and they all read
 
 - Scanning the game's executable for SPU programs turned up twenty-three of them,
