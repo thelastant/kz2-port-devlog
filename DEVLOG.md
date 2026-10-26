@@ -1,5 +1,14 @@
 ﻿# Development log
 
+## 2026-10-27 — vector single-precision add
+
+- Added a vector single-precision add primitive with round-to-nearest
+  semantics, including signed-zero and overflow coverage in tests.
+- Runtime tests: 102 passing
+- Recompiler tests: 30 passing
+- Coverage: 12,384 of 14,732 functions; 140,349 native blocks
+- The port is not yet playable.
+
 ## 2026-10-27 — vector integer and fused arithmetic primitives
 
 - Added three more vector primitives: unsigned word add and subtract (modulo
