@@ -1,5 +1,21 @@
 ﻿# Development log
 
+## 2026-10-27 - tail instructions and three caught defects
+
+- Added eight tail instructions covering vector halfword merge, doubleword
+  store-with-update, unsigned multiply-high, double-precision multiply,
+  byte-reversed load, doubleword shifts and multiply-low.
+- Three defects were caught by tests before commit: an A-form operand error in
+  the double multiply, a negative-shift bug in the halfword merge, and a wrong
+  expected value in its test.
+- One instruction is deliberately a no-op (trap word) because the port has no
+  trap handler; that is recorded as a limitation.
+- Runtime tests: 103 passing
+- Recompiler tests: 48 passing
+- Coverage: 47,584 of 47,929 functions (99.3%); 373,532 native blocks.
+  Real remaining gaps: 222.
+- The port is not yet playable.
+
 ## 2026-10-27 - vector maximum, permute, shifts and estimates
 
 - Added five more primitives: vector maximum with the architecture's
