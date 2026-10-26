@@ -1,5 +1,18 @@
 ﻿# Development log
 
+## 2026-10-27 - word compares, 64-bit divide, updating stores
+
+- Added eight more instructions: an integer vector compare with condition
+  aggregation, signed and unsigned 64-bit division, two updating stores, a
+  doubleword multiply-high, a prefetch no-op and a sign-extending word load.
+- A unit test caught two of them registered in the wrong decode table before
+  they could ship.
+- Runtime tests: 103 passing
+- Recompiler tests: 49 passing
+- Coverage: 47,652 of 47,929 functions (99.4%); 374,413 native blocks.
+  Real remaining gaps: 142.
+- The port is not yet playable.
+
 ## 2026-10-27 - tail instructions and three caught defects
 
 - Added eight tail instructions covering vector halfword merge, doubleword
