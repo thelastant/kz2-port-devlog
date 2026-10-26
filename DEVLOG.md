@@ -1,5 +1,17 @@
 ﻿# Development log
 
+## 2026-10-27 — automatic import of untranslated targets
+
+- The execution driver now discovers untranslated targets by itself: it runs,
+  reads the reported target, imports it and retries, then re-runs the whole
+  property matrix. It finds the one indirect callee on the first round.
+- Runtime tests: 103 passing
+- Recompiler tests: 42 passing
+- Coverage: 46,648 of 47,929 functions (97.3%); 353,518 native blocks
+- This is still a pre-run import step, not runtime translation of arbitrary
+  indirect calls, and it is still not a reference-emulator comparison.
+- The port is not yet playable.
+
 ## 2026-10-27 — end-to-end check turned into a property
 
 - The execution check no longer compares against one fixed record: it asserts
