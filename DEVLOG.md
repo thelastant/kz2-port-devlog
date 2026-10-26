@@ -1,5 +1,24 @@
 ﻿# Development log
 
+## 2026-10-26 - SPU programs become schedulable threads
+
+- The pieces so far ran SPU programs one at a time, as a test harness. Now they are
+  threads: a group with a priority and a lifecycle, members with their own 256 KiB
+  workspace, and turns taken in a fixed rotation so one SPU cannot starve another.
+- Loading a program is checked, not assumed: the image arrives as segments, and if a
+  segment that should contain code cannot be fetched, the thread refuses to start
+  rather than beginning with zeros where its instructions should be. That class of
+  bug - a program that runs but computes nonsense - is the expensive one.
+- A group cannot gain threads after it starts, group size is bounded to the six
+  usable SPUs, and destroying a group takes its threads with it. These are the
+  firmware's own rules, and following them means the game's expectations are met
+  instead of argued with.
+- The boot itself has not moved: it still stops at the call that would create the job
+  system. That is the next piece - the scheduler that sits on top of these threads -
+  and it is a real subsystem rather than wiring.
+- Boot position: 95,507 executed blocks
+- Runtime tests: 171 passing
+- The port is not yet playable.
 ## 2026-10-26 - up to the SPURS gate
 
 - The boot now gets through the job system's setup and stops at the call that would
