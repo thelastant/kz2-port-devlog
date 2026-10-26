@@ -1,5 +1,14 @@
 ﻿# Development log
 
+## 2026-10-27 — deterministic timebase
+
+- Added the timebase read (both encodings) backed by a deterministic counter
+  advanced once per dispatched native block, so runs stay reproducible.
+- Runtime tests: 102 passing
+- Recompiler tests: 38 passing
+- Coverage: 45,827 of 47,929 functions (95.6%); 334,786 native blocks
+- The port is not yet playable.
+
 ## 2026-10-27 — subtract-from-immediate and shift fix
 
 - Added a subtract-from-immediate primitive with carry recording, and fixed
