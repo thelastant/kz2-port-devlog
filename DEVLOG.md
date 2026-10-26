@@ -1,5 +1,14 @@
 ﻿# Development log
 
+## 2026-10-27 — reservation-based atomic pair
+
+- Added the load-reserve / store-conditional pair with a single-threaded
+  reservation model and condition-register success reporting.
+- Runtime tests: 102 passing
+- Recompiler tests: 39 passing
+- Coverage: 45,899 of 47,929 functions (95.8%); 336,396 native blocks
+- The port is not yet playable.
+
 ## 2026-10-27 — deterministic timebase
 
 - Added the timebase read (both encodings) backed by a deterministic counter
