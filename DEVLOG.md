@@ -1,5 +1,27 @@
 ﻿# Development log
 
+## 2026-10-27 - every import is now named
+
+- Cracked the identifier scheme: the per-function numbers in the executable are
+  standard PS3 NIDs - the first four bytes of SHA-1 of the function name plus a
+  fixed 16-byte suffix, read little-endian.
+- Verified two ways: all 30 identifiers of the system library resolve to real
+  API names, and a public NID list resolves the rest. All 342 imports across 23
+  libraries now have names, and the boot cross-checks the generated table
+  against the executable's own descriptor counts so it cannot go stale quietly.
+- The first import the startup code reaches is sys_initialize_tls, called with
+  no arguments - exactly the kind of call a C runtime makes first. It is now
+  implemented as a documented decision: the thread gets a zeroed TLS block and
+  the thread pointer register is set; the real TLS image is not modelled yet.
+- Two loader responsibilities were found by running the code rather than
+  guessing: the entry takes argc/argv/envp in registers, and startup walks the
+  stack pointer above its initial value, so it needs headroom. Supplying both
+  moved the boot from address 4 past the end of the C runtime into the game's
+  own code.
+- Runtime tests: 103 passing
+- Recompiler tests: 53 passing
+- Coverage unchanged: 47,823 of 47,929 functions decoded, zero real gaps.
+- The port is not yet playable.
 ## 2026-10-27 - complete import map recovered
 
 - Found the per-library import descriptors in the executable. Each one names a
