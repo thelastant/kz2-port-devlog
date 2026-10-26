@@ -1,5 +1,16 @@
 ﻿# Development log
 
+## 2026-10-27 — end-to-end check turned into a property
+
+- The execution check no longer compares against one fixed record: it asserts
+  that the recovered constructor echoes whatever type and flags it is given,
+  marks the record active and returns cleanly. Three input pairs pass.
+- Runtime tests: 103 passing
+- Recompiler tests: 42 passing
+- Coverage: 46,648 of 47,929 functions (97.3%); 353,518 native blocks
+- Still not a reference-emulator comparison.
+- The port is not yet playable.
+
 ## 2026-10-27 — recovered function now runs to completion
 
 - The end-to-end check now executes a recovered retail function through to its
