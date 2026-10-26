@@ -1,5 +1,32 @@
 ﻿# Development log
 
+## 2026-10-27 - the wall was a compare bug, not a missing subsystem
+
+- This is a correction. The previous entry classified the boot's frontier as a
+  subsystem the emulator would have to grow. That was wrong, and the way it was
+  disproved matters more than the fix.
+- A single-function call test - run one recompiled guest function against data
+  known to be static and correct - returned a garbage fault before the fix and a
+  valid pointer after it. The data had been fine all along.
+- The actual bug: the word-compare instructions compared the full 64-bit register
+  instead of the low 32 bits. A list terminator of minus one, loaded by a word
+  load into a register whose upper half stays zero, therefore never compared
+  equal, so every list walk ran past its end and dereferenced whatever followed.
+  Two instructions, one class of symptom, and it looked exactly like the game
+  expecting memory that was never allocated.
+- Effect: the boot went from 6,090 to 39,193 executed blocks immediately, and to
+  **58,011** after the next few requirements. It now runs deep into subsystem
+  initialisation - mutexes, memory mapping, synchronisation primitives - rather
+  than stopping in the C runtime.
+- Lesson recorded for next time: when a fault looks like "the game expects data
+  we never built", test the hypothesis by calling the suspect function directly
+  on known-good inputs before concluding anything about missing subsystems.
+- Also added: a host-backed virtual filesystem for the game's device paths, with
+  traversal rejection, plus two runtime tests.
+- Runtime tests: 105 passing
+- Recompiler tests: 58 passing
+- Decoding: 47,916 of 47,929 functions, zero real instruction gaps.
+- The port is not yet playable.
 ## 2026-10-27 - zero real gaps again, and where the boot actually stands
 
 - Decoding is complete again and better than before: **47,916 of 47,929 functions**
