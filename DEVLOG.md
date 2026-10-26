@@ -1,5 +1,17 @@
 ﻿# Development log
 
+## 2026-10-27 — bounded function-body manifests and vector subtract
+
+- Coverage measurement is now bounded to analysed function bodies, so embedded
+  data is no longer misread as code. This corrected the baseline: 208 reported
+  gaps were data, not code.
+- Added a vector single-precision subtract primitive with signed-zero and
+  overflow coverage.
+- Runtime tests: 102 passing
+- Recompiler tests: 32 passing
+- Coverage: 12,637 of 14,732 functions; 140,242 native blocks
+- The port is not yet playable.
+
 ## 2026-10-27 — vector floating-point compares
 
 - Added the three vector floating-point compare primitives, including their
