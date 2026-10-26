@@ -1,5 +1,21 @@
 ﻿# Development log
 
+## 2026-10-26 - two harness rules, learned the hard way
+
+- Coverage had collapsed from around a hundred and fourteen thousand executed blocks to
+  twenty-one. The cause was not the game and not the port: the walker had been pruning
+  its list of entry points after a run that was aborted mid-way, and the aborted run had
+  never reached most of them, so they looked unused.
+- The rule is now explicit: prune only when a run actually walks its path. A spin or a
+  fault tells us nothing about which entry points are needed, so nothing is removed.
+- The second rule is about not fooling ourselves: after three cycles with no improvement,
+  the walker stops and reports the best figure instead of looping. A stall is a signal
+  that the frontier needs a subsystem, not more entry points, and it should be visible
+  rather than buried in logs.
+- Coverage has recovered from twenty-one to **95,530** executed blocks and is still
+  climbing, so these rules cost a little wall-clock time and save a lot of confusion.
+- Runtime tests: 177 passing
+- The port is not yet playable.
 ## 2026-10-26 - measuring before optimising, and a spin that cost an hour
 
 - The complaint was that the harness only used one core. That was worth checking rather
