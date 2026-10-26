@@ -1,5 +1,30 @@
 ﻿# Development log
 
+## 2026-10-26 - narrowing a crash instead of guessing at it
+
+- The boot stops on a null pointer after a thread waits on an event queue. This entry
+  is about turning that symptom into a fact.
+- Instead of reading code and forming a theory, the harness now reports the machine
+  state at the moment of the fault - every register that is not zero, the condition
+  registers, and the call chain - and can dump a chosen object or narrow a store
+  watch to a chosen region of memory.
+- What that produced: the pointer being dereferenced lives in a structure that is
+  only half filled in. The event queue id at its start is zero, and the handler slot
+  further in is zero, while other fields around them hold real values. A watch over
+  the structure shows every write that ever reached it, and none of them ever touched
+  the queue id. The caller also ignores the result of the wait, so it walks straight
+  into a null handler.
+- One theory was tested and eliminated rather than believed: that a worker thread ran
+  before its creator finished setting the structure up. Thread priorities were not
+  honoured, so that was plausible. They are now honoured - lower numbers run first,
+  ties take turns - and the fault is unchanged. So it is not a race; something that
+  should have written that field never ran.
+- That is a much better position than "it crashes": the next question is precise and
+  local - which routine owns that field, and did one of the calls the port
+  implements fail to hand back the value it should have.
+- Boot position: 95,749 executed blocks, unchanged this entry
+- Runtime tests: 175 passing
+- The port is not yet playable.
 ## 2026-10-26 - the job system starts accepting work, and a new kind of wall
 
 - SPURS can now be told about the game's event queues, and it can accept tasks: the
