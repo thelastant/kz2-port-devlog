@@ -1,5 +1,28 @@
 ﻿# Development log
 
+## 2026-10-27 - why the oracle was blocked (it was not set-pc)
+
+- Spent this session reading the emulator's debugger source and testing against
+  a live process instead of guessing.
+- The real cause: with the default LLVM CPU decoder, the debugger's breakpoint
+  request is answered "OK" but the breakpoint is never installed. Every
+  "redirect, resume, stop at a sentinel" attempt was therefore guaranteed to
+  fail, no matter how correct the register writes were.
+- Second cause: closing a debugger connection terminates the debugger thread
+  inside the emulator. A previous session had been talking to a dead stub that
+  reported one thread and a frozen PC, which is where the misleading
+  "PC never changes" observations came from. A fresh process reports 19 threads.
+- Third finding: under the LLVM decoder the reported program counter is not the
+  live one, so writes to it do not redirect a running thread. Registers are
+  live; the PC is not.
+- The only non-LLVM CPU decoder is the static interpreter, which does install
+  breakpoints. Moving the oracle to that decoder is the next step; the rest of
+  the protocol (host-side memory reads, argument setup, record comparison)
+  carries over unchanged.
+- Runtime tests: 103 passing
+- Recompiler tests: 53 passing
+- Coverage unchanged: 47,823 of 47,929 functions decoded, zero real gaps.
+- The port is not yet playable.
 ## 2026-10-27 - the decoder is complete
 
 - The last nine instruction forms are in: string store, doubleword conditional
