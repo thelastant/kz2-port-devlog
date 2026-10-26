@@ -1,5 +1,30 @@
 ﻿# Development log
 
+## 2026-10-26 - the SPU programs run end to end, and the gaps are gone
+
+- Every one of the game's twenty-three SPU programs now runs without hitting an
+  instruction the port cannot execute. That was the goal of this stage.
+- The measurement went from seven hundred instructions executed across the corpus to
+  almost twenty-five thousand, not because of one big change, but because each
+  missing instruction turned out to be small and exact once its behaviour was taken
+  from a reference rather than guessed.
+- The boundary that remains is not decoding. It is *memory*: four of the programs
+  ask to move data between their own 256 KiB workspace and the console's main
+  memory, and the port has no main memory attached to an SPU yet. That request is
+  now reported with its parameters instead of being ignored or faked.
+- The other remaining boundary is time: one program sits in a loop polling for a
+  signal that never arrives, because standalone there is nothing to signal it. A real
+  run gives that thread a scheduler to block in, which is the next piece of work.
+- Channels - the instruction-level mechanism SPUs use to talk to the rest of the
+  machine - are now modelled with real state: event masks, signal registers,
+  mailboxes, tags and the decrementer. A read with nothing to deliver says so
+  precisely, per channel, rather than inventing a value.
+- Also cleaned up: the earlier instruction table was silently missing six entries
+  (instructions with no operands, and two branch-hint fields). It now carries the
+  complete set.
+- Runtime tests: 140 passing
+- Missing instructions across all 23 programs: none
+- The port is not yet playable.
 ## 2026-10-26 - the port starts running SPU code
 
 - The port now executes the game's SPU instructions. Not simulated hardware: the
