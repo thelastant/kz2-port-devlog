@@ -1,5 +1,24 @@
 ﻿# Development log
 
+## 2026-10-26 - the job system starts accepting work, and a new kind of wall
+
+- SPURS can now be told about the game's event queues, and it can accept tasks: the
+  task binary is read out of the game's own memory, checked, loaded into an SPU
+  workspace and started on the port's scheduler.
+- Loading is deliberately strict. A task whose image cannot be read, or that is not
+  an SPU program at all, is reported as a failure. The tempting alternative - saying
+  "created" and letting the guest wait forever - is the worst outcome, because from
+  the outside it looks like a hang with no explanation.
+- The boot moved again: from 95,518 to **95,749** executed blocks. That is the
+  furthest it has been.
+- And it then stopped on something new. Not a missing instruction, not an
+  unimplemented call: a null pointer dereference, immediately after a thread waited
+  on an event queue. That is a different class of problem - the kind a real program
+  has - and it points at either what we deliver in an event or at code that does not
+  check a wait result. Both are findable, and the next step is to read the faulting
+  routine rather than guess.
+- Runtime tests: 175 passing
+- The port is not yet playable.
 ## 2026-10-26 - the job system's own state, implemented natively
 
 - The port now creates the game's SPURS instances and tasksets - the containers its
