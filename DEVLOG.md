@@ -1,5 +1,29 @@
 ﻿# Development log
 
+## 2026-10-26 - memory for the SPU programs, and a place for framerate and aspect options
+
+- The SPU programs can now move data: main memory is attached, and the two transfer
+  commands the game uses copy between that memory and an SPU's 256 KiB workspace.
+  Tags are marked complete the way a waiting program expects to see them.
+- Not every transfer form is implemented. Lists, atomics and the barrier variants
+  report themselves with their parameters rather than silently doing nothing, which
+  is the same rule applied throughout. Transfers also complete immediately, because
+  there is no asynchronous DMA engine yet - stated, not implied.
+- One encoding detail was wrong at first and a test caught it: the flag that marks a
+  list transfer is not one of the low bits I had stripped, so list loads had been
+  quietly folded into ordinary loads.
+- Separately, a small but structural piece for the question of whether this port can
+  add framerate, aspect and similar options: the split between *guest ticks* and
+  *host frames* is now explicit. The game simulates at its own fixed rate; the host
+  decides how those steps become frames, with a window size, a vsync and frame-cap
+  setting, and an aspect policy that can letterbox to the native shape or record an
+  ultrawide intent.
+- That split is what makes such features configuration instead of binary patches. It
+  does not change what the game computes - only when. Features that change the
+  simulation itself are a different, larger job.
+- Runtime tests: 149 passing
+- Missing SPU instructions across the corpus: none
+- The port is not yet playable.
 ## 2026-10-26 - the SPU programs run end to end, and the gaps are gone
 
 - Every one of the game's twenty-three SPU programs now runs without hitting an
