@@ -1,5 +1,17 @@
 ﻿# Development log
 
+## 2026-10-27 - five more instruction families
+
+- Closed five decode classes in one pass: a logical-with-complement form, an
+  immediate XOR, a byte load with address update, an instruction barrier, and
+  the recording forms of the rotate-mask doubleword family (which was the real
+  cause of a 48-site class, not a missing instruction).
+- Runtime tests: 103 passing
+- Recompiler tests: 44 passing
+- Coverage: 46,904 of 47,929 functions (97.9%); 358,405 native blocks.
+  Real remaining gaps: 648; the rest are embedded data.
+- The port is not yet playable.
+
 ## 2026-10-27 - double-to-integer conversion and barriers
 
 - Added a double-to-signed-integer conversion with documented invalid-result
