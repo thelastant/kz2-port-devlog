@@ -1,5 +1,21 @@
 ﻿# Development log
 
+## 2026-10-26 - flags that actually wait
+
+- Synchronisation inside the job system now works the way it does on the console: the
+  event bits live in the shared structure, so code that polls them sees real values,
+  and a wait blocks until the bits appear instead of returning a comfortable lie.
+- That last part matters for diagnosis. If a wait's condition can never be satisfied -
+  because the task that would satisfy it does not run yet - the port reports a
+  deadlock and stops. The alternative, pretending the wait succeeded, would let the
+  game run on with wrong assumptions and fail much later somewhere unrelated.
+- Both wait variants are handled: any-of and all-of, matching the two modes the API
+  defines.
+- The boot is at **110,336** executed blocks. The next call is the lock-free queue that
+  tasks are submitted through - the queue between the game and the SPU work, and the
+  last structural piece before task execution can mean something.
+- Runtime tests: 177 passing
+- The port is not yet playable.
 ## 2026-10-26 - deciding where a PC game keeps its data
 
 - The game asked for a writable cache. That forced a decision that is as much product
