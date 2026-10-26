@@ -1,5 +1,24 @@
 ﻿# Development log
 
+## 2026-10-26 - up to the SPURS gate
+
+- The boot now gets through the job system's setup and stops at the call that would
+  actually create it. That is progress, and it is also the honest boundary.
+- What was done: the attribute block SPURS is configured with is a documented
+  structure, so the port writes it exactly - the version, the number of SPUs, the
+  priorities, the exit flag - and the setter for thread-group type touches only the
+  one flag it owns, refusing combinations the firmware refuses.
+- What was deliberately not done: creating a SPURS instance. That call allocates an
+  SPU thread group, installs the scheduler into the SPUs' local stores and starts
+  them running. The port can execute SPU programs and move their data, but it has no
+  SPU *threads* inside its scheduler yet, so reporting success would be a claim that
+  would only fall over much later, in a place that would be far harder to diagnose.
+- So the next piece is concrete: SPU thread groups - images, local stores, and SPU
+  contexts scheduled alongside the processor threads. After that the job system can
+  be created for real, and the boot can reach the graphics calls.
+- Boot position: 95,507 executed blocks
+- Runtime tests: 164 passing
+- The port is not yet playable.
 ## 2026-10-26 - the graphics boundary, and a decision about backends
 
 - Two questions got answered in code and in writing this round: where graphics work
