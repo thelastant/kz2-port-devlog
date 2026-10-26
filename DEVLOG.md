@@ -1,5 +1,27 @@
 ﻿# Development log
 
+## 2026-10-26 - deciding how the game's SPU code will run
+
+- The port reached the point where the game starts its SPU job system. That is the
+  real fork in this project: most of the game's gameplay code lives on the SPUs,
+  and the animation decoder is one such program.
+- The question was put plainly - interpreter, defer, or compile - and the honest
+  answer for a native PC game is that you do not ship an interpreter. The play path
+  should run compiled code, exactly as the main processor code already does.
+- So the plan is two stages. First write an interpreter, once, as the written-down
+  specification of what the instructions mean and as a reference to test against.
+  Then translate the SPU programs to native code and check every translated block
+  against that reference. The interpreter is scaffolding, not the product.
+- The first piece is in: the port can read an SPU program image out of the game and
+  build the 256 KiB working memory an SPU sees. Verified against the real program
+  the game embeds, not a synthetic one.
+- Nothing executes yet, and the port does not pretend otherwise: the first call
+  that would run SPU code still fails loudly.
+- Boot position: **95,497 executed blocks** (unchanged this entry; the work was
+  foundation and a decision).
+- Runtime tests: 127 passing
+- Recompiler tests: 58 passing
+- The port is not yet playable.
 ## 2026-10-26 - threads that actually wait, and the game reading its own metadata
 
 - The port's scheduler used to be polite but dumb: guest threads took turns whether
