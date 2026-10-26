@@ -1,5 +1,29 @@
 ﻿# Development log
 
+## 2026-10-26 - the graphics boundary, and a decision about backends
+
+- Two questions got answered in code and in writing this round: where graphics work
+  attaches, and which GPU APIs the port will target.
+- First, the address layer the game itself manipulates: the renderer's own memory
+  window, the page tables that map system memory into it, and translation in both
+  directions. An address that was never mapped now fails instead of returning
+  something plausible, which is the difference between a bug that shows up and one
+  that corrupts a picture in a way nobody can explain.
+- Second, the seam the renderer will sit behind, plus a backend that records what
+  the game submits without drawing anything. That matters because it lets the
+  translation be checked against the game's real submissions before any GPU code
+  exists. A draw with no program bound is rejected rather than counted, so the
+  recorder cannot flatter the port.
+- Backend decision, recorded with its reasoning: Vulkan first, because translated
+  shaders land naturally in SPIR-V and because it covers Windows and Linux/Steam
+  Deck; Direct3D 12 afterwards behind the same seam, which is a port of the state
+  and submission layer rather than a second renderer. If only one ships in v1,
+  Vulkan is the better single choice.
+- The honest risk, written down rather than discovered later: shader translation is
+  the largest piece, and the renderer's quirks are the kind that look almost right
+  when they are wrong.
+- Runtime tests: 160 passing
+- The port is not yet playable.
 ## 2026-10-26 - memory for the SPU programs, and a place for framerate and aspect options
 
 - The SPU programs can now move data: main memory is attached, and the two transfer
