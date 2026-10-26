@@ -1,5 +1,24 @@
 # Development log
 
+## 2026-10-26 - the boot stops stopping
+
+- With the runtime fallback in place, the interpreter grew by iteration rather than by
+  rebuild: floating point, condition-register logic, vector compares and conversions,
+  and one missing vector decode case that the retail binary exposed.
+- The result is a different kind of state. The boot no longer stops on a missing
+  translation anywhere on its path; it now reaches the game's own polling loop and runs
+  until the safety cap - **20,000,000 blocks**, over four times what it managed before.
+- The loop calls a sleep 4,032 times and polls an event queue 14 times. That is the shape
+  of code waiting for something the port does not yet deliver, not code that is missing.
+- So the next question is behavioural, and a much better one: what is the game waiting
+  for? Candidates are a display flip completion, a vblank, or a message on an event
+  queue. All three are things the port has records for but no producer of yet.
+- 38 blocks were interpreted on the way, which is the fallback doing its job: those are
+  addresses the static translation had never seen.
+- Tests: recompiler 60 (including a decode case taken from the retail binary), harness
+  13, graphics 8.
+- The port is not yet playable.
+
 ## 2026-10-26 - the treadmill is gone: run the code you have not compiled
 
 - The port had a bad feedback loop. Each address the boot reached through an indirect
