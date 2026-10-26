@@ -1,5 +1,14 @@
 ﻿# Development log
 
+## 2026-10-27 — subtract-from-immediate and shift fix
+
+- Added a subtract-from-immediate primitive with carry recording, and fixed
+  one shift form that previously ignored its recording bit.
+- Runtime tests: 102 passing
+- Recompiler tests: 37 passing
+- Coverage: 45,685 of 47,929 functions (95.3%); 332,387 native blocks
+- The port is not yet playable.
+
 ## 2026-10-27 — word shift primitives
 
 - Added three 32-bit word shift primitives with masked shift counts,
