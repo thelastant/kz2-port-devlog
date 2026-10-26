@@ -1,5 +1,25 @@
 ﻿# Development log
 
+## 2026-10-27 - the decoder was silently truncating functions
+
+- Found a decoding bug by chasing a boot failure: the recompiler stopped reading
+  a function at the first return instruction. Compilers routinely emit an early
+  return and then more code reached only by a forward branch, so whole regions
+  of already-"emitted" functions had no blocks.
+- The decoder now walks a worklist: fall-through plus every branch target inside
+  the function window, each path stopping at its own return.
+- Two mistakes of mine, caught immediately by the boot and by the closure size:
+  treating a call as the end of a path cut the boot closure from 600 functions
+  to 3, and treating an indirect call as one lost a thunk's epilogue. Calls
+  return, so decoding continues through them; only unconditional branches and
+  returns end a path.
+- Both cases now have regression tests. The closure also shrank from 600 to 116
+  functions for the same instruction budget, because the old decoder was also
+  reading code after unconditional branches that can never execute.
+- Runtime tests: 103 passing
+- Recompiler tests: 55 passing (two added)
+- Coverage unchanged: 47,823 of 47,929 functions decoded, zero real gaps.
+- The port is not yet playable.
 ## 2026-10-27 - every import is now named
 
 - Cracked the identifier scheme: the per-function numbers in the executable are
