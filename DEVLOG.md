@@ -1,5 +1,23 @@
 # Development log
 
+## 2026-10-26 - the guest stopped waiting
+
+- The boot had reached the game's main loop and sat in it: four thousand sleeps, twenty
+  million blocks, no progress. Not a missing translation - the game was waiting for
+  evidence that the GPU had consumed its commands, and the port was never producing it.
+- The evidence is a counter. The command ring's control block has a reference value the
+  guest polls; the port initialised it and then left it frozen forever. Consuming a
+  submission now advances it, exactly as the hardware does, along with the read pointer.
+- The effect was immediate: the loop exits on the first iteration and the game proceeds
+  into code the port had never executed.
+- It then stops on its **own assertion** - a deliberate marker write into a null address,
+  the failure path of its internal assert handler. That is a good sign: the guest is
+  running real code and telling us it detected a bad state.
+- So the next question is narrow and answerable: which assertion fired. The handler has
+  hundreds of callers, but the return address at the trap identifies the site.
+- Tests: graphics layer 9 (control-register progress), recompiler 60, harness 13.
+- The port is not yet playable.
+
 ## 2026-10-26 - the boot stops stopping
 
 - With the runtime fallback in place, the interpreter grew by iteration rather than by
