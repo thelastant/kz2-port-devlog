@@ -1,5 +1,22 @@
 ﻿# Development log
 
+## 2026-10-27 - full import table bound; first import identified by slot
+
+- Corrected the import table: it lives at a different address and is four times
+  larger than first bound - 342 slots, one per thunk, matching the 342 thunks in
+  the stub section exactly.
+- The boot now reports the true slot number of the first import it needs.
+- Found and recorded an important limitation: this executable carries no import
+  name metadata at all - no stub-name section, and no pointer anywhere in the
+  file references a library or function name. So the slots cannot be named from
+  the binary yet; that is now an explicit open question rather than a guess.
+- Deliberate policy restated: an unbound import is a hard error. Returning a
+  fabricated zero would let the game continue in a state that can never match
+  the original, which is worse than stopping.
+- Runtime tests: 103 passing
+- Recompiler tests: 53 passing
+- Coverage unchanged: 47,823 of 47,929 functions decoded, zero real gaps.
+- The port is not yet playable.
 ## 2026-10-27 - import binding; the boot now stops on a real library call
 
 - The startup code reaches the game's import thunks, which read a resolved
