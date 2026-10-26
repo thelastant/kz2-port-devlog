@@ -1,5 +1,22 @@
 ﻿# Development log
 
+## 2026-10-27 - cache, string and vector-element tail
+
+- Closed 17 more instruction forms, covering string loads, cache-block zero,
+  vector element stores, byte-reversed stores, extended subtract, doubleword
+  arithmetic shifts, FPSCR field moves and a scratch special-purpose register.
+- One of them exposed a real branch bug rather than just a decoder gap: the
+  "branch if set" encodings carry two prediction bits, and the port had only
+  ever accepted the one canonical spelling, so those aliases were rejected
+  instead of being mis-executed. The decoder now normalises the hint bits.
+- Two behaviours are documented as port decisions rather than architecture:
+  saturation flags are not modelled (no vector status register yet), and FPSCR
+  is recorded state that no floating-point helper consumes yet.
+- Runtime tests: 103 passing
+- Recompiler tests: 52 passing
+- Coverage: 47,808 of 47,929 functions (99.7%); 377,492 native blocks.
+  Real remaining gaps: 15.
+- The port is not yet playable.
 ## 2026-10-27 - vector word forms and a split-field shift
 
 - Added four vector forms (halfword splat, arithmetic word shift, two word
