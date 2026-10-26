@@ -1,5 +1,24 @@
 ﻿# Development log
 
+## 2026-10-27 - the decoder is complete
+
+- The last nine instruction forms are in: string store, doubleword conditional
+  store, an unsigned halfword compare, unsigned halfword add/subtract (both
+  modulo and saturating), the shift-left control vector, FPSCR read, and a word
+  pack.
+- The full scan now decodes **47,823 of 47,929 functions** and the remaining
+  106 failures all classify as data — bytes outside the disassembler's defined
+  instruction ranges. Real instruction gaps: **zero**.
+- To be precise about what that means: every word the analysis presents as a
+  real instruction now decodes and emits a native block. It does not mean any
+  of those blocks has been proven to behave like the original. No function has
+  been compared against the emulator yet.
+- Known modelling gaps are unchanged and still documented: vector saturation
+  flags are not modelled, FPSCR is recorded but not consumed, prefetch and trap
+  forms are no-ops, and the cache-block zero assumes Cell's 128-byte line.
+- Runtime tests: 103 passing
+- Recompiler tests: 53 passing
+- The port is not yet playable.
 ## 2026-10-27 - cache, string and vector-element tail
 
 - Closed 17 more instruction forms, covering string loads, cache-block zero,
