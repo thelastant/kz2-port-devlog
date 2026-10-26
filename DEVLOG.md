@@ -1,5 +1,25 @@
 ﻿# Development log
 
+## 2026-10-26 - teaching the port to read SPU programs
+
+- The port can now decode the game's SPU instructions, and the table it uses was
+  generated from a published instruction-set definition rather than written from
+  memory.
+- That mattered. The first attempt at the table got the bit order wrong, which
+  showed up immediately in two ways: only half the words in a real program
+  resolved, and the program's *first* instruction did not decode at all. Both were
+  fixed by reading the data instead of trusting the assumption.
+- Decoding the animation task image the game embeds now resolves **93%** of its
+  words, and the entry instruction reads as "load immediate address", which is
+  exactly what a task entry looks like. The remainder is dominated by a repeated
+  padding word, not by undecoded code.
+- Two instructions share an encoding with a general form (`lr` is "or with zero",
+  `iret` is "compare with zero in the destination"). The generator records those
+  overlaps explicitly and a test requires them to stay documented, so a decoder
+  can never silently pick a name for the wrong reason.
+- Runtime tests: 129 passing
+- Recompiler tests: 58 passing
+- The port is not yet playable.
 ## 2026-10-26 - deciding how the game's SPU code will run
 
 - The port reached the point where the game starts its SPU job system. That is the
