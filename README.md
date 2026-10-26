@@ -17,9 +17,9 @@ same input. RPCS3 is an oracle; its code is not used.
   readers.
 - Native static-recompiler pipeline for the original PowerPC code, including a
   basic-block dispatcher and recursive direct-call import.
-- Current manifest coverage: **45,899 of 47,929 code functions** (95.8%) and
-  **336,396 native basic blocks**.
-- Test suite: **278 passing**, **23 ignored** (real-disc tests are opt-in).
+- Current manifest coverage: **46,122 of 47,929 code functions** (96.2%) and
+  **340,226 native basic blocks**.
+- Test suite: **280 passing**, **23 ignored** (real-disc tests are opt-in).
 - Coverage is measured over the full analysed function inventory; decode
   coverage is not behavioural correctness.
 - The game is not yet playable. Menus, level scripting, the full animation

@@ -1,5 +1,17 @@
 ﻿# Development log
 
+## 2026-10-27 — system-call boundary
+
+- Added a system-call boundary with a small, explicitly limited set of
+  behaviours: mutex create/destroy/lock/unlock and elided sleeps. Anything
+  else fails loudly with its call number instead of returning a guessed value.
+- 522 of the 794 statically identified call sites now have defined behaviour.
+- Runtime tests: 103 passing
+- Recompiler tests: 40 passing
+- Coverage: 46,122 of 47,929 functions (96.2%); 340,226 native blocks.
+  Decode coverage is not capability: unimplemented calls fail at runtime.
+- The port is not yet playable.
+
 ## 2026-10-27 — reservation-based atomic pair
 
 - Added the load-reserve / store-conditional pair with a single-threaded
