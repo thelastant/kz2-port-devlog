@@ -1,5 +1,26 @@
 ﻿# Development log
 
+## 2026-10-27 - threads, syscalls, and a self-driving boot walk
+
+- The port now runs guest threads. A game does not start its main function on
+  the loader thread; the C runtime creates one, so without a thread model the
+  boot could only ever stop. Threads are switched cooperatively at block
+  boundaries, which keeps execution deterministic and is enough for code that
+  waits on shared flags.
+- The boot walk became automatic: it regenerates a small module, seeds the
+  address it stopped on, rebuilds and repeats, and it now remembers those
+  addresses so each run continues instead of repeating. It stops itself when the
+  blocker needs real code rather than more emitted code.
+- System calls implemented from stops rather than guesses: stack information,
+  address reservation and backing memory, timebase frequency, current time, and
+  thread identity. One of them was a bug in our own call handling, found because
+  the fault report includes the address.
+- Measured progress on the same entry point: 22 executed blocks at the start of
+  this stretch, 3,069 now, with the frontier moving from the C runtime into the
+  game's own subsystems.
+- Runtime tests: 103 passing
+- Recompiler tests: 56 passing
+- The port is not yet playable.
 ## 2026-10-27 - a stack-frame bug that broke every function, and a 10x faster loop
 
 - Found the reason the boot kept unwinding almost immediately: doubleword load
