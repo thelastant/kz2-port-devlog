@@ -1,5 +1,17 @@
 ﻿# Development log
 
+## 2026-10-27 — first end-to-end execution check
+
+- A recovered retail function now runs through the native recompiled path in an
+  automated harness: emit, compile, execute, and assert its observable output.
+- The check reproduces the function's previously recorded behaviour and fails
+  if any of it regresses.
+- Runtime tests: 103 passing
+- Recompiler tests: 42 passing
+- Coverage: 46,648 of 47,929 functions (97.3%); 353,518 native blocks
+- Not yet a comparison against the reference emulator; that is the next step.
+- The port is not yet playable.
+
 ## 2026-10-27 — doubleword rotate and hinted branches
 
 - Added a doubleword rotate-mask primitive and accepted the hinted conditional
