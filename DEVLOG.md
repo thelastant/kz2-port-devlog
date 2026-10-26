@@ -1,5 +1,18 @@
 ﻿# Development log
 
+## 2026-10-27 - vector maximum, permute, shifts and estimates
+
+- Added five more primitives: vector maximum with the architecture's
+  signed-zero rule, a per-byte shift, a byte permute, a reciprocal estimate and
+  an updating single-precision load.
+- A unit test caught an undefined shift in the permute implementation, and a
+  compile-time overflow check caught the first attempt at it.
+- Runtime tests: 103 passing
+- Recompiler tests: 47 passing
+- Coverage: 47,406 of 47,929 functions (98.9%); 370,144 native blocks.
+  Real remaining gaps: 396.
+- The port is not yet playable.
+
 ## 2026-10-27 - five more vector and integer forms
 
 - Added a vector minimum (with the architecture's signed-zero rule), a halfword
