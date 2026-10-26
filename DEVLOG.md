@@ -1,5 +1,23 @@
 ﻿# Development log
 
+## 2026-10-27 - second firmware call, and a compiler-scaling fix
+
+- The boot now gets past the C runtime's TLS setup and reaches its second
+  firmware call: creating a lightweight mutex. For a guest that runs one thread
+  that is modelled faithfully rather than stubbed - no lock can be contended,
+  so creation zeroes the object and the lock operations succeed.
+- Registering a library is now recorded instead of discarded. Returning success
+  while throwing the descriptor away would be exactly the kind of silent lie
+  that surfaces much later as inexplicable behaviour.
+- The generated dispatcher was a match with one arm per translated block -
+  about 12,800 arms for a 900-function closure, which dominated compile time
+  (three minutes for a nine-megabyte file). It now uses a sorted table and a
+  binary search. That matters for what comes next: larger closures were limited
+  by the compiler, not by the amount of code.
+- Runtime tests: 103 passing
+- Recompiler tests: 55 passing
+- Coverage unchanged: 47,823 of 47,929 functions decoded, zero real gaps.
+- The port is not yet playable.
 ## 2026-10-27 - the decoder was silently truncating functions
 
 - Found a decoding bug by chasing a boot failure: the recompiler stopped reading
