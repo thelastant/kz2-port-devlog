@@ -1,5 +1,24 @@
 ﻿# Development log
 
+## 2026-10-26 - one wrong choice, and twice the code
+
+- The port had been sitting in a loop for millions of executed blocks. The culprit was
+  a decision I had made earlier and defended: making a condition-variable wait return
+  immediately, on the grounds that a spurious wake-up is permitted.
+- It is permitted. It was also wrong here. The game's pattern is "wait while the
+  condition is false"; returning immediately turns that into a spin, and because the
+  port runs threads cooperatively, the thread that would satisfy the condition never
+  got to run. The loop consumed three million blocks before hitting the safety cap.
+- The fix makes waits real: a waiter is recorded and blocked, a signal releases one,
+  a signal-all releases all, destroying the condition releases anyone still waiting,
+  and if nothing can ever signal, the port reports a deadlock rather than spinning.
+- The effect was immediate and much larger than expected: executed coverage doubled, from
+  about a hundred and ten thousand blocks to **223,049**. The spin had been hiding how
+  much of the game the port can already reach.
+- A test covers both halves of the contract - the wait must block, and the signal must
+  wake exactly that waiter - driven through the same import trampolines a real call uses.
+- Runtime tests: 182 passing
+- The port is not yet playable.
 ## 2026-10-26 - two harness rules, learned the hard way
 
 - Coverage had collapsed from around a hundred and fourteen thousand executed blocks to
