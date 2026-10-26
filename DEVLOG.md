@@ -1,5 +1,34 @@
 # Development log
 
+## 2026-10-26 - the graphics context, and the first real submission
+
+- The boot had been stopping on a null callback deep inside the game's own code. The
+  cause was not the game and not the renderer: the graphics initialisation call takes a
+  *variable* that receives a pointer to a structure the system owns, and the port had
+  been writing the structure directly into that variable. The game then read the first
+  word of a structure that was not there.
+- Two independent clues settled it. The game's own command-writing code loads that
+  variable and dereferences it before use, which only makes sense if the system stores
+  a pointer there. The reference implementation says the same thing twice - in how it
+  logs the argument and in what it writes at the end.
+- The structure is now real and owned by the port, and the command buffer is the game's
+  own memory rather than one the port invents. The first four kilobytes stay reserved,
+  a fragment is 32 KiB with one word held back, and the fill callback is expressed the
+  way PPU code expects to call it: as a descriptor with a code and a table-of-contents
+  word, not a bare address.
+- With that fixed, the boot walks through display configuration - it probes the modes
+  it cares about and configures one - and produces its **first real command
+  submission: 16,384 words.** The decode shows a single large no-operation packet,
+  which is exactly what a command ring looks like before the first draw is built.
+- That is the milestone that changes the shape of the work: submissions are now
+  measured rather than predicted, and the next steps are decode coverage and the
+  renderer, not speculation.
+- Also new: a tool that seeds a whole function's control flow at once - branch targets
+  and switch-table cases - instead of chasing one address per rebuild. For the display
+  function that is 25 entry points in one pass, replacing about ten cycles.
+- Tests: graphics crate 5 passing, rewritten for the corrected ownership contract.
+- The port is not yet playable.
+
 ## 2026-10-26 - reaching the graphics system, and answering it honestly
 
 - The boot now passes the graphics system's initialisation call and continues into the

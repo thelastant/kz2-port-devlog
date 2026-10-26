@@ -17,13 +17,15 @@ same input. RPCS3 is an oracle; its code is not used.
   readers.
 - Native static-recompiler pipeline for the original PowerPC code, including a
   basic-block dispatcher and recursive direct-call import.
-- Boot reaches graphics initialisation and the display configuration path, and captures
-  the command stream the game submits itself: **4,053,634** executed blocks.
+- Boot reaches graphics initialisation, configures the display, and captures the first
+  command submission the game makes itself: **4,053,748** executed blocks, 16,384
+  submitted words.
 - Current closure: **48,950 functions** and **426,264 native basic blocks** compiled
   from the retail executable, driven through a dispatcher that follows real control
   flow rather than per-function tests.
 - Test suite: **379 tests** across the workspace, including 13 in the boot harness that
-  cover display and audio output. Real-disc tests are opt-in and skipped by default.
+  cover display and audio output and 5 in the graphics layer. Real-disc tests are opt-in
+  and skipped by default.
 - Coverage is measured over the full analysed function inventory; decode
   coverage is not behavioural correctness.
 - The game is not yet playable. Menus, level scripting, the full animation
