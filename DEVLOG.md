@@ -1,5 +1,27 @@
 ﻿# Development log
 
+## 2026-10-27 - zero real gaps again, and where the boot actually stands
+
+- Decoding is complete again and better than before: **47,916 of 47,929 functions**
+  (99.97%), with **zero real instruction gaps** - the thirteen remaining failures
+  are data outside the analyser's instruction ranges. Basic blocks: 407,953.
+- The improvement came from a decoder fix made for the boot: functions that
+  return early and continue further on are now decoded along every branch, not
+  just up to their first return.
+- The last two real gaps were a single vector instruction, chosen deliberately
+  from the failure list rather than guessed at.
+- The boot walk reached **6,090 executed basic blocks** from the retail entry
+  point (it started at 22 when this work began) and now stops walking a list
+  whose nodes are built at runtime. That was established by measurement: no code
+  computes the address, no static node holds it, and an instrumented store watch
+  on both store widths recorded no writer. So the next requirement is a
+  data-producing subsystem - resource or module registration - not a decoding bug.
+- Decision recorded: pause the boot crawl there. It is project-sized work, and
+  graphics and file I/O remain before anything is playable, so speculative
+  crawling would spend time off the critical path.
+- Runtime tests: 103 passing
+- Recompiler tests: 57 passing
+- The port is not yet playable.
 ## 2026-10-27 - eight-way parallel compilation
 
 - The compiler for the recompiled guest code now uses the whole machine. A single
