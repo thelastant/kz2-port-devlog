@@ -1,5 +1,20 @@
 ﻿# Development log
 
+## 2026-10-27 — recovered function now runs to completion
+
+- The end-to-end check now executes a recovered retail function through to its
+  return, including one indirect callee imported as an extra root, and asserts
+  the resulting record fields.
+- Two harness defects were found and fixed: the stack pointer sat at the top of
+  the region (one access past the mapping), and the transaction could not be
+  started from more than one root.
+- Runtime tests: 103 passing
+- Recompiler tests: 42 passing
+- Coverage: 46,648 of 47,929 functions (97.3%); 353,518 native blocks
+- Still not a reference-emulator comparison; arbitrary indirect calls also need
+  runtime resolution rather than manual roots.
+- The port is not yet playable.
+
 ## 2026-10-27 — first end-to-end execution check
 
 - A recovered retail function now runs through the native recompiled path in an
