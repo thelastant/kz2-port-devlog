@@ -1,5 +1,22 @@
 ﻿# Development log
 
+## 2026-10-26 - the game starts looking at the disk
+
+- Two more pieces of the platform are real now, and one of them is the first that
+  reaches outside the process.
+- Condition variables: creating one works, and waiting on one returns immediately. That
+  is not a shortcut dressed up as an implementation - a condition variable is allowed
+  to wake spuriously, so the caller re-checks its condition and waits again. The
+  alternative, blocking forever with nothing able to signal, would hang the port.
+- File metadata: asking for a file's details now goes to the host filesystem and comes
+  back with real sizes and modification times, in the structure the platform expects.
+  That matters because the game uses file checks to decide what data exists.
+- Boot position: **104,007 executed blocks**, up from 102,567.
+- The next call asks for a writable cache area rather than a read of the disc. That is
+  a different kind of requirement: the port has to decide where a PC game's cache and
+  save data live on the host, which is a product decision as much as a technical one.
+- Runtime tests: 175 passing
+- The port is not yet playable.
 ## 2026-10-26 - past a hundred thousand, inside the job system's setup
 
 - The boot has now executed more than **100,000 blocks** of the game's own code: from
