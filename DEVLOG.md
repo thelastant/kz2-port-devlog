@@ -1,5 +1,23 @@
 ﻿# Development log
 
+## 2026-10-26 - deciding where a PC game keeps its data
+
+- The game asked for a writable cache. That forced a decision that is as much product
+  as engineering: on a console the platform owns save data and cache; on a PC the port
+  has to choose, and that choice is hard to change once players have saves.
+- The decision, now implemented: three locations with different lifetimes. The disc is
+  read-only game data and stays wherever the game is installed. Saves and settings live
+  in the user's application data, so updating or moving the install cannot take them
+  away. The cache is a separate, disposable directory, so "clear the cache" is safe by
+  construction rather than by asking every subsystem to be careful.
+- The default is the standard per-user application data folder, overridable with an
+  environment variable, and the port prints both paths at startup so there is nothing
+  hidden about where a player's data went.
+- The effect was immediate: the boot went from 104,007 to **110,251** executed blocks,
+  because the calls behind the cache mount stopped failing.
+- Runtime tests: 177 passing (three new ones cover device mapping, save-directory
+  creation and file metadata)
+- The port is not yet playable.
 ## 2026-10-26 - the game starts looking at the disk
 
 - Two more pieces of the platform are real now, and one of them is the first that
