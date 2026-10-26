@@ -1,5 +1,29 @@
 ﻿# Development log
 
+## 2026-10-26 - the game reaches its frame loop, and what multithreading means here
+
+- Two things were asked for and both are now answered with evidence.
+- First, multithreading. The dispatch table the harness builds at startup is now
+  merged in parallel across workers, and the port reports startup and run time
+  separately. Measured: four milliseconds of startup against twenty-four to seven
+  hundred milliseconds of guest run. The guest loop itself stays single-threaded, and
+  that is deliberate: switch points, the simulated clock and data transfers must not
+  depend on host timing, or nothing measured in this project stays reproducible.
+- Second, the crash from the previous entry is gone, and the reason was worth the
+  hunt. Creating an event queue takes a number of entries, not a number of bytes. The
+  port required a multiple of thirty-two, so every queue creation failed, callers
+  never stored an id, and a dispatcher thread later waited on queue zero and called
+  through a null handler. One wrong unit, three layers of confusing symptoms.
+- With that fixed the game no longer crashes. It reached its main loop: three million
+  blocks showed two thousand iterations of polling input, trying an event queue and
+  sleeping between frames. Sleeping returned immediately in the port, so the loop was
+  spinning; sleeping now advances the simulated clock and actually waits.
+- The boot now sits at 95,781 executed blocks, working through the job system's
+  workload attributes - the last stretch before the graphics calls.
+- Also fixed: an instrumentation list that grew without bound and took a spinning run
+  to two gigabytes, and a run cap so an unattended run stops instead of hanging.
+- Runtime tests: 175 passing
+- The port is not yet playable.
 ## 2026-10-26 - narrowing a crash instead of guessing at it
 
 - The boot stops on a null pointer after a thread waits on an event queue. This entry
