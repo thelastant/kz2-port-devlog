@@ -1,5 +1,17 @@
 ﻿# Development log
 
+## 2026-10-27 — coverage rebased, reciprocal square root added
+
+- Coverage measurement was corrected to cover the full analysed function
+  inventory instead of a long-standing subset. Reported coverage therefore
+  rises because the denominator was wrong, not because the port jumped.
+- Added a reciprocal square-root estimate primitive; its exact result bits are
+  implementation-defined and are not claimed.
+- Runtime tests: 102 passing
+- Recompiler tests: 35 passing
+- Coverage: 45,435 of 47,929 functions (94.8%); 327,315 native blocks
+- The port is not yet playable. Decode coverage is not behavioural correctness.
+
 ## 2026-10-27 — indexed float access and single-precision square root
 
 - Added the indexed floating-point load/store family and a single-precision
