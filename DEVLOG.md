@@ -1,5 +1,17 @@
 ﻿# Development log
 
+## 2026-10-27 — decode audit and integer arithmetic
+
+- Coverage accounting now separates real code from embedded data using the
+  analyser's own instruction map; a sixth of the previous "gaps" were data.
+- Added integer divide, multiply-high and condition-register-move primitives,
+  with undefined-case behaviour documented rather than assumed.
+- Runtime tests: 103 passing
+- Recompiler tests: 41 passing
+- Coverage: 46,585 of 47,929 functions (97.2%); 352,335 native blocks.
+  Real remaining gaps: 1,026 (the rest are data).
+- The port is not yet playable.
+
 ## 2026-10-27 — system-call boundary
 
 - Added a system-call boundary with a small, explicitly limited set of
