@@ -1,5 +1,24 @@
 ﻿# Development log
 
+## 2026-10-26 - past a hundred thousand, inside the job system's setup
+
+- The boot has now executed more than **100,000 blocks** of the game's own code: from
+  the platform's C runtime, through threads and memory, the job system, the game's
+  own metadata, its frame loop, and now its workload configuration.
+- This stretch was more of the same useful work: the job system's workload
+  description is a documented structure, so the port builds it exactly - including
+  the checks the firmware makes, such as alignment, a non-zero minimum contention and
+  priorities that cannot exceed a nibble.
+- The port also now accepts workload add/shutdown/wait/remove, idle-SPU requests and
+  exception handlers. Two of those are honest placeholders in a specific sense: a
+  workload has nothing to wait for yet because no job chain executes, and a handler
+  is stored but cannot fire until a task reports an error. Both are written down as
+  such rather than presented as working.
+- Nothing here is guessing at the API. Each call was implemented from its structure
+  or its reference behaviour, and the frontier moves one call at a time.
+- Boot position: **100,384 executed blocks**
+- Runtime tests: 175 passing
+- The port is not yet playable.
 ## 2026-10-26 - the game reaches its frame loop, and what multithreading means here
 
 - Two things were asked for and both are now answered with evidence.
