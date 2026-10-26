@@ -1,5 +1,28 @@
 ﻿# Development log
 
+## 2026-10-27 - a stack-frame bug that broke every function, and a 10x faster loop
+
+- Found the reason the boot kept unwinding almost immediately: doubleword load
+  and store instructions were decoded without their opcode extension. The net
+  effect was that the stack-store-with-update never updated the stack pointer,
+  so **no function in the game allocated a stack frame**, and every frame
+  displacement was also short by the low two bits of the encoding.
+- After fixing it the same boot path went from 22 executed blocks ending in a
+  jump to null to 370+ blocks with a balanced stack, and it now stops on real
+  library and system calls instead of collapsing.
+- That fix was only findable because the harness now reports blocks executed and
+  traces the stack pointer per block. A clean "returned successfully" had been
+  hiding a null branch; those are now distinct outcomes.
+- Iteration speed was the other limiter. Measured: a 150-function closure builds
+  in 5 s, 1200 functions in 86 s, and the large build executed 383 of its 16,326
+  blocks - so compiling more was both slower and less reliable. The loop now
+  compiles a small closure and seeds the exact address the boot stopped on.
+- An automated walker repeats that cycle unattended and stops when the blocker
+  needs real code rather than more emitted code. It advanced nine functions and
+  then surfaced a system call, which is the correct kind of stop.
+- Runtime tests: 103 passing
+- Recompiler tests: 56 passing (DS-form regression added)
+- The port is not yet playable.
 ## 2026-10-27 - second firmware call, and a compiler-scaling fix
 
 - The boot now gets past the C runtime's TLS setup and reaches its second
