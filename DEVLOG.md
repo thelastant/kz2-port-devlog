@@ -1,5 +1,15 @@
 ﻿# Development log
 
+## 2026-10-27 - word shifts, unsigned multiply-high, CR move
+
+- Added six more instructions, including a register-controlled word rotate and
+  a condition-register field copy; one was registered in the wrong decode table
+  and an existing test caught it immediately.
+- Runtime tests: 103 passing
+- Recompiler tests: 50 passing
+- Coverage: 47,682 of 47,929 functions (99.5%); 374,939 native blocks.
+  Real remaining gaps: 115.
+- The port is not yet playable.
 ## 2026-10-27 - word compares, 64-bit divide, updating stores
 
 - Added eight more instructions: an integer vector compare with condition
