@@ -1,5 +1,24 @@
 ﻿# Development log
 
+## 2026-10-27 - eight-way parallel compilation
+
+- The compiler for the recompiled guest code now uses the whole machine. A single
+  rustc invocation is serial no matter how its codegen units are configured, so
+  the translated code is emitted as eight independent crates that cargo builds
+  concurrently, with the boot harness merging their tables once at startup.
+- Measured on the same closure: a 1200-function build went from 86 s to 18 s, and
+  the automated walk's cycle dropped from 6-9 s to 4 s.
+- The gain grows with closure size, which is the direction this needs: the set of
+  translated code only ever gets larger.
+- Also fixed a coupling bug the walk exposed: the function budget must stay above
+  the number of seeded entry points, otherwise the entry's own call graph is
+  truncated and the run stops after a single block.
+- Current state of the walk: 4,260 executed blocks from the retail entry point,
+  up from 22 at the start of this stretch, frontier moving through the game's own
+  code with no invented behaviour.
+- Runtime tests: 103 passing
+- Recompiler tests: 56 passing
+- The port is not yet playable.
 ## 2026-10-27 - threads, syscalls, and a self-driving boot walk
 
 - The port now runs guest threads. A game does not start its main function on
