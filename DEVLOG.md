@@ -1,5 +1,24 @@
 ﻿# Development log
 
+## 2026-10-27 - the retail entry point runs natively
+
+- New boot binary: it maps the retail executable, reads the entry descriptor
+  from the ELF header, and jumps straight into recompiled native code. No
+  emulator is involved anywhere in this path.
+- First run executes real module startup code and stops at the first branch
+  target that has not been translated yet. That address turns out to be an
+  import thunk: it loads a function descriptor from a table and branches
+  through it.
+- So the next piece of work is binding that import table to native
+  implementations, not writing more decoder code.
+- The prior session's debugging detour is closed out: the reference emulator's
+  breakpoints are silently disabled under its default CPU decoder, which is why
+  that protocol never worked. The emulator is back to its normal settings and
+  is not part of the build or the runtime.
+- Runtime tests: 103 passing
+- Recompiler tests: 53 passing
+- Coverage unchanged: 47,823 of 47,929 functions decoded, zero real gaps.
+- The port is not yet playable.
 ## 2026-10-27 - why the oracle was blocked (it was not set-pc)
 
 - Spent this session reading the emulator's debugger source and testing against
