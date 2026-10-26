@@ -1,5 +1,18 @@
 ﻿# Development log
 
+## 2026-10-27 - vector word forms and a split-field shift
+
+- Added four vector forms (halfword splat, arithmetic word shift, two word
+  merges) and the arithmetic doubleword shift-right-immediate.
+- That last one carried the two largest remaining decoder gaps on its own: its
+  sixth shift bit lives in the instruction's extension field, so it appears as
+  two different encodings depending on the shift amount. Both retail sites
+  confirmed the split before it shipped.
+- Runtime tests: 103 passing
+- Recompiler tests: 51 passing
+- Coverage: 47,757 of 47,929 functions (99.6%); 376,353 native blocks.
+  Real remaining gaps: 46.
+- The port is not yet playable.
 ## 2026-10-27 - word shifts, unsigned multiply-high, CR move
 
 - Added six more instructions, including a register-controlled word rotate and
