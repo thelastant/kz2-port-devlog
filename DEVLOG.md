@@ -1,5 +1,32 @@
 ﻿# Development log
 
+## 2026-10-26 - measuring before optimising, and a spin that cost an hour
+
+- The complaint was that the harness only used one core. That was worth checking rather
+  than assuming, so each stage was timed separately: the recompiler decodes three
+  thousand functions in well under a second, the emulated program itself runs for tens
+  of milliseconds, and the build that follows takes about fifty seconds.
+- So the single-core complaint was pointing at the right place but the wrong culprit.
+  The stage that eats the time is the Rust compiler turning generated straight-line
+  code into a binary - and that stage does not care how fast the emulated code runs.
+- Three changes followed. Generated shards are built without optimisation, because
+  optimising code that executes for thirty milliseconds is pure compile-time cost.
+  They are also split into sixteen crates instead of eight, since the compiler
+  parallelises across crates rather than inside one. And a shard file is only rewritten
+  when its contents actually changed, which means most cycles rebuild one or two crates
+  instead of all of them.
+- The result is a thirty-second cycle instead of fifty, on eight cores rather than
+  sixteen - a deliberate cap, since the point is to leave the machine usable while it
+  works.
+- One more thing surfaced, and it was worse than the slowness: a single cycle sat in a
+  loop inside the emulated program for **fifty-seven minutes** of CPU time. There is now
+  a hard instruction cap, so a spin costs seconds and is reported as a spin - which is
+  itself useful, because it means the game is waiting for something the port never
+  delivers.
+- Boot position: coverage was rebuilt after that abort pruned some seed points and is
+  climbing again (65,922 blocks at the time of writing, from 21 after the abort).
+- Runtime tests: 177 passing
+- The port is not yet playable.
 ## 2026-10-26 - not copying a stub
 
 - The next piece was the queue that task submissions travel through. The obvious move -
