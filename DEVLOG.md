@@ -1,5 +1,15 @@
 ﻿# Development log
 
+## 2026-10-27 — vector floating-point compares
+
+- Added the three vector floating-point compare primitives, including their
+  recording forms, with the architecture-defined condition-register summary
+  and NaN handling.
+- Runtime tests: 102 passing
+- Recompiler tests: 31 passing
+- Coverage: 12,407 of 14,732 functions; 141,034 native blocks
+- The port is not yet playable.
+
 ## 2026-10-27 — vector single-precision add
 
 - Added a vector single-precision add primitive with round-to-nearest
