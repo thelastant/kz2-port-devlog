@@ -1,5 +1,16 @@
 ﻿# Development log
 
+## 2026-10-27 - vector select and float-as-integer store
+
+- Added a vector bit-select primitive and a store that writes floating-point
+  register bits as an integer word without conversion (the two differ, and the
+  second had to be implemented explicitly rather than reused from the first).
+- Runtime tests: 103 passing
+- Recompiler tests: 45 passing
+- Coverage: 46,963 of 47,929 functions (98.0%); 359,941 native blocks.
+  Real remaining gaps: 592; the rest are embedded data.
+- The port is not yet playable.
+
 ## 2026-10-27 - five more instruction families
 
 - Closed five decode classes in one pass: a logical-with-complement form, an
