@@ -1,5 +1,29 @@
 # Development log
 
+## 2026-10-26 - the treadmill is gone: run the code you have not compiled
+
+- The port had a bad feedback loop. Each address the boot reached through an indirect
+  call or a computed jump had no compiled code, and adding it meant regenerating and
+  rebuilding for roughly half an hour. Progress was real but the cost per step was
+  absurd.
+- The fix is the obvious one, and it should have come earlier: when there is no compiled
+  code for an address, interpret that block and carry on. The interpreter shares the
+  recompiler's decoder, delegates system calls to the runtime that already owns them, and
+  records every address it runs so hot code can still be compiled later.
+- Anything it does not understand stops the run and says which instruction and where.
+  That matters more than coverage: a guess would corrupt the game's state quietly, and a
+  quiet corruption is far more expensive than a stop.
+- Effect: the boot immediately ran **10,002** more blocks and the next stop is a
+  *decoder* gap rather than a missing block. Iterating on those now takes seconds, not
+  half an hour.
+- This is the first structural change in a while that changes the *rate* of progress
+  rather than the position.
+- Current state: **4,435,979** executed blocks, two command submissions, and a fallback
+  that covers the common integer, memory, branch and floating-point surface plus a first
+  slice of vector code.
+- Tests: harness 13, recompiler 59, graphics 8.
+- The port is not yet playable.
+
 ## 2026-10-26 - address translation was the missing piece
 
 - The port had been handing the game two address-translation tables and leaving them
