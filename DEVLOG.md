@@ -1,4 +1,41 @@
-﻿# Development log
+# Development log
+
+## 2026-10-26 - reaching the graphics system, and answering it honestly
+
+- The boot now passes the graphics system's initialisation call and continues into the
+  display configuration path. That is the boundary where the work stops being about
+  reachability and starts being about pixels.
+- One finding changed the design: the game never calls a draw function. It writes its
+  own command stream into a buffer and submits it by updating a register the graphics
+  system consumes. The port therefore provides a real buffer and a real register, and
+  records every submission, decoding it into a list of operations. That recorded list -
+  not recollection, and not documentation - will drive the renderer.
+- It also caught a bug by reading rather than by crashing: the command buffer was
+  originally sized so that its last page fell outside the mapped region. Nothing would
+  have failed until a frame had nearly filled the buffer, at which point it would have
+  looked like a mystery fault in unrelated code. It is now sized to fit, with the end
+  of the buffer inside the mapped region.
+- The display answer turned out to matter more than expected. The game asks for the
+  output state and then branches on the aspect and the scan mode it is told. Answering
+  zeroes would have sent it down a path no console takes, so the port answers with what
+  it will actually present: 1080p, widescreen, progressive.
+- Audio output advertises **stereo only**, deliberately. Surround support does not exist
+  in the port yet, and advertising it would have produced a configuration that silently
+  produces nothing much later. The game now selects stereo, which is what the port can
+  play.
+- Everything unimplemented is refused with the system's own error code rather than
+  accepted and ignored - stereoscopic display modes, secondary outputs, and non-PCM
+  audio formats among them. A refusal is visible; a silent success is not.
+- Iteration cost dropped from about half an hour to a few seconds for this workstream,
+  because the new state lives outside the generated game code. That matters more than it
+  sounds: it is the difference between trying an idea and not bothering.
+- Coverage: **4,053,634** guest blocks executed. The next stop is a translation gap
+  rather than a missing system call, which is a different kind of problem and a
+  reasonable place to be.
+- Harness tests: 13 passing (display state layout, device errors, resolution table,
+  configuration validation, audio device information, error paths, and slot resolution
+  by name rather than by number).
+- The port is not yet playable.
 
 ## 2026-10-26 - one wrong choice, and twice the code
 

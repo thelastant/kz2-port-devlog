@@ -1,4 +1,4 @@
-﻿# kz2-port
+# kz2-port
 
 A native Windows Rust port of Killzone 2, developed against a user-supplied
 retail disc dump. The original game is used only as a behavioral and data
@@ -17,9 +17,13 @@ same input. RPCS3 is an oracle; its code is not used.
   readers.
 - Native static-recompiler pipeline for the original PowerPC code, including a
   basic-block dispatcher and recursive direct-call import.
-- Current manifest coverage: **47,916 of 47,929 code functions** (99.97%) and
-  **407,953 native basic blocks**.
-- Test suite: **295 passing**, **23 ignored** (real-disc tests are opt-in).
+- Boot reaches graphics initialisation and the display configuration path, and captures
+  the command stream the game submits itself: **4,053,634** executed blocks.
+- Current closure: **48,950 functions** and **426,264 native basic blocks** compiled
+  from the retail executable, driven through a dispatcher that follows real control
+  flow rather than per-function tests.
+- Test suite: **379 tests** across the workspace, including 13 in the boot harness that
+  cover display and audio output. Real-disc tests are opt-in and skipped by default.
 - Coverage is measured over the full analysed function inventory; decode
   coverage is not behavioural correctness.
 - The game is not yet playable. Menus, level scripting, the full animation
