@@ -1,5 +1,15 @@
 ﻿# Development log
 
+## 2026-10-27 — word shift primitives
+
+- Added three 32-bit word shift primitives with masked shift counts,
+  zero/sign extension and condition-register updates, unit-tested at the
+  31/32-bit boundary.
+- Runtime tests: 102 passing
+- Recompiler tests: 36 passing
+- Coverage: 45,566 of 47,929 functions (95.1%); 329,859 native blocks
+- The port is not yet playable.
+
 ## 2026-10-27 — coverage rebased, reciprocal square root added
 
 - Coverage measurement was corrected to cover the full analysed function
