@@ -1,5 +1,24 @@
 ﻿# Development log
 
+## 2026-10-26 - not copying a stub
+
+- The next piece was the queue that task submissions travel through. The obvious move -
+  copy the reference implementation - was not available, because the reference
+  implementation is a placeholder that reports success and does nothing.
+- That distinction matters. Copying it would have produced an import that "works"
+  while silently discarding the game's work: no crash, no error, just a game that
+  quietly stops making progress somewhere later. The port has already been burned once
+  by a wrong unit turning into a null-pointer crash three layers away; a silent
+  no-op is worse, because nothing points at it.
+- So the contract came from the game instead: the call sites show 32-byte elements, a
+  caller-chosen depth, a direction, and a 32-byte body pushed with a flags word. The
+  queue is implemented as a bounded FIFO in the guest's own buffer, refusing
+  submissions that would not fit rather than dropping them, and refusing a
+  configuration whose buffer is not real memory - because a push that "succeeds" into
+  nowhere is the same lie in a different place.
+- Boot position: **111,605** executed blocks, up from 110,336.
+- Runtime tests: 177 passing
+- The port is not yet playable.
 ## 2026-10-26 - flags that actually wait
 
 - Synchronisation inside the job system now works the way it does on the console: the
