@@ -1,5 +1,22 @@
 ﻿# Development log
 
+## 2026-10-27 - import binding; the boot now stops on a real library call
+
+- The startup code reaches the game's import thunks, which read a resolved
+  function descriptor out of a table and branch through it. The port now binds
+  every populated slot (94) to synthetic descriptors that the recompiled
+  dispatcher recognises as imports.
+- Result: the native boot runs module startup, goes through the thunk, and
+  stops at the first genuine library call - import slot 15.
+- Unbound imports raise a hard error carrying the slot and the calling address,
+  rather than returning an invented value. That is deliberate: a wrong return
+  here would silently corrupt everything downstream.
+- Calls into the import-thunk section are now followed even though it sits
+  outside the function inventory.
+- Runtime tests: 103 passing
+- Recompiler tests: 53 passing
+- Coverage unchanged: 47,823 of 47,929 functions decoded, zero real gaps.
+- The port is not yet playable.
 ## 2026-10-27 - the retail entry point runs natively
 
 - New boot binary: it maps the retail executable, reads the entry descriptor
