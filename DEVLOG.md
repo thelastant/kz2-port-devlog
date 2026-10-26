@@ -1,5 +1,23 @@
 ﻿# Development log
 
+## 2026-10-26 - the executable contains 23 SPU programs, and they all read
+
+- Scanning the game's executable for SPU programs turned up twenty-three of them,
+  roughly 290,000 instructions together. That is the workload the port has to run,
+  now measured instead of estimated.
+- More useful than the count: every one of those programs decodes at between 85 and
+  96 percent with the generated instruction table, most in the mid nineties. That
+  consistency matters. A table fitted to one image could look good on that image
+  and fail elsewhere; twenty-three independent programs agreeing at the same rate
+  is evidence that the decoder covers the instruction set as the game actually
+  uses it.
+- The remaining words are dominated by a repeated padding value, not by unknown
+  instructions.
+- This is the preparation for execution: the next step is giving those instructions
+  meaning and running a real task, then compiling them to native code.
+- Runtime tests: 129 passing
+- Recompiler tests: 58 passing
+- The port is not yet playable.
 ## 2026-10-26 - teaching the port to read SPU programs
 
 - The port can now decode the game's SPU instructions, and the table it uses was
