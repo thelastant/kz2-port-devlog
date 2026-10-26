@@ -1,5 +1,18 @@
 ﻿# Development log
 
+## 2026-10-27 - five more vector and integer forms
+
+- Added a vector minimum (with the architecture's signed-zero rule), a halfword
+  splat, a reciprocal square-root estimate, a rotate-mask-insert doubleword and
+  an element-word store.
+- A unit test caught an incorrect signed-zero rule in the first version of the
+  minimum before it shipped.
+- Runtime tests: 103 passing
+- Recompiler tests: 46 passing
+- Coverage: 47,240 of 47,929 functions (98.6%); 367,165 native blocks.
+  Real remaining gaps: 522.
+- The port is not yet playable.
+
 ## 2026-10-27 - vector select and float-as-integer store
 
 - Added a vector bit-select primitive and a store that writes floating-point
