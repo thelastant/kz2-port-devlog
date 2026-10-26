@@ -1,5 +1,36 @@
 ﻿# Development log
 
+## 2026-10-26 - threads that actually wait, and the game reading its own metadata
+
+- The port's scheduler used to be polite but dumb: guest threads took turns whether
+  or not they could do anything, so a thread waiting for a message just spun. This
+  entry is about fixing that properly, because the game's next steps depend on it.
+- Event queues, event ports and event flags are now real objects with real state -
+  messages queued, senders mapped to receivers, bit patterns held. A thread that
+  waits on them is marked blocked and the scheduler moves on.
+- Two details made this work. A syscall can now stop a thread in the middle of a
+  block, so it resumes at the instruction after the call. And when every thread is
+  waiting, the port does not hang: it skips the idle time forward to the earliest
+  timeout, or reports a deadlock if there is none. That keeps runs deterministic
+  and makes a stuck game a diagnostic instead of a freeze.
+- The wait-mode constants for event flags were checked against the platform
+  definitions after a guess turned out backwards (AND versus OR). Worth noting
+  because the wrong way round would have looked like a game logic bug later.
+- Controller support landed with the real structures: one connected standard pad,
+  sticks centred, no buttons pressed. There is no host input source yet, so the
+  port does not pretend buttons are being pressed - only that a pad is present.
+- The game now reads its own metadata, and the port answers from the actual disc:
+  the game's PARAM.SFO is parsed and served, so the title id, title and version are
+  the shipped values. First attempt read only a third of the file because the
+  string encoding assumption was wrong; the real file says otherwise, which is why
+  it is worth parsing the real thing.
+- Also added: a tool that lists every imported function the game actually calls,
+  with call sites. 311 of 342 imports are used across 1,424 sites, and that map is
+  now the work queue for the rest of the port.
+- Boot position: **95,497 executed blocks**, up from 58,011.
+- Runtime tests: 123 passing
+- Recompiler tests: 58 passing
+- The port is not yet playable.
 ## 2026-10-27 - the wall was a compare bug, not a missing subsystem
 
 - This is a correction. The previous entry classified the boot's frontier as a
