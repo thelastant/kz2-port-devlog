@@ -1,5 +1,31 @@
 # Development log
 
+## 2026-10-26 - a conditional return, and the first behaviour fault
+
+- A stubborn class of "no translated code here" stops traced back to one wrong
+  assumption in the translator: a *conditional* return was treated as the end of a
+  function's reachable code. It only returns when its condition holds; when it does not,
+  execution simply continues, and that continuation had never been translated.
+- Fixing it was not a local patch: it added **2,471** previously invisible blocks
+  across the whole program, and the boot immediately ran further than before.
+- With the holes closed, the failure changed character. The port is no longer stopping
+  because code is missing; it is stopping because the game called one of its own
+  routines with a null buffer and then wrote through it.
+- That is the useful kind of failure. The chain is fully laid out in the registers and
+  the code: the buffer came from the game's own allocator, which returned null for a
+  128-byte request. So the question is now "why is the game's heap unusable", not "what
+  instruction is missing".
+- Two candidate answers, in order: the heap was sized from a memory-size answer the
+  port gives incorrectly, or an earlier allocation failed and the game did not check it.
+  Both can be settled by reading the values the port actually returned, so neither has
+  to be guessed.
+- Boot: **4,057,575** executed blocks; the first command submission is unchanged at
+  15,376 words with nine methods, which is the correct behaviour for a port that has
+  not yet drawn anything.
+- Tests: recompiler 59 (a conditional return now falls through to a real block, an
+  unconditional one does not).
+- The port is not yet playable.
+
 ## 2026-10-26 - the graphics context, and the first real submission
 
 - The boot had been stopping on a null callback deep inside the game's own code. The
