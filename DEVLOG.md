@@ -1,6 +1,17 @@
 ﻿# Development log
 
-## 2026-10-27 — automatic import of untranslated targets
+## 2026-10-27 - double-to-integer conversion and barriers
+
+- Added a double-to-signed-integer conversion with documented invalid-result
+  behaviour, and treated memory barriers as no-ops for the single-threaded
+  port.
+- Runtime tests: 103 passing
+- Recompiler tests: 43 passing
+- Coverage: 46,726 of 47,929 functions (97.5%); 355,227 native blocks.
+  Real remaining gaps: 827; the other 376 are embedded data.
+- The port is not yet playable.
+
+## 2026-10-27 - automatic import of untranslated targets
 
 - The execution driver now discovers untranslated targets by itself: it runs,
   reads the reported target, imports it and retries, then re-runs the whole
