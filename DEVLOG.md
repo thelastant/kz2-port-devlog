@@ -1,5 +1,25 @@
 ﻿# Development log
 
+## 2026-10-26 - the job system's own state, implemented natively
+
+- The port now creates the game's SPURS instances and tasksets - the containers its
+  SPU work lives in - rather than stopping at the call that would create them.
+- The approach is worth stating: the job system's scheduler is implemented in the
+  port's own code, and the *tasks* it will dispatch are the game's own SPU programs
+  running on the SPU threads built earlier. That keeps the port native: no firmware
+  kernel is interpreted, no emulated hardware sits in the path.
+- The rules that matter are enforced rather than assumed: a second instance at the
+  same address is rejected, a taskset must belong to a live instance, its size must
+  fit an SPU's workspace and align to the descriptor size, and tearing an instance
+  down takes its tasksets with it.
+- One honest limitation is written down in the notes: joining a taskset currently
+  succeeds immediately, because no task has ever been submitted. That is true for an
+  empty taskset, and it will have to block once tasks exist.
+- Boot position: **95,518 executed blocks**, up from 95,507. The next stop is
+  attaching an event queue to SPURS - which the port can do for real, since it
+  already has working event queues.
+- Runtime tests: 175 passing
+- The port is not yet playable.
 ## 2026-10-26 - SPU programs become schedulable threads
 
 - The pieces so far ran SPU programs one at a time, as a test harness. Now they are
