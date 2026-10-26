@@ -1,5 +1,27 @@
 # Development log
 
+## 2026-10-26 - address translation was the missing piece
+
+- The port had been handing the game two address-translation tables and leaving them
+  completely blank. Blank, in this API, does not mean "nothing mapped yet" - it means
+  *every* address fails to translate. The game translates addresses itself, read the
+  failure, and its allocator returned null; the caller then wrote through the null.
+- The fix was not a guess: the initialisation call describes an input/output memory
+  window, the system is supposed to map it as part of initialisation, and the game's own
+  translation code shows exactly how it reads the tables. Publishing those entries was
+  enough.
+- Effect: the boot ran **4,240 more blocks** and the null-pointer fault disappeared.
+- A second, smaller correctness point came out of it: the game writes slightly past the
+  end of its own command ring (a jump command at the boundary). Those bytes are now
+  counted and shown in the report instead of being dropped, and the boundary submission
+  reports that its last packet is truncated rather than pretending the stream ended
+  cleanly.
+- Current state: **4,061,815** executed blocks, **two** command submissions totalling
+  16,384 words with nine distinct methods, and the next stop is again a translation gap -
+  which the toolkit now handles in batches rather than one address at a time.
+- Tests: graphics layer 8 passing.
+- The port is not yet playable.
+
 ## 2026-10-26 - a conditional return, and the first behaviour fault
 
 - A stubborn class of "no translated code here" stops traced back to one wrong
