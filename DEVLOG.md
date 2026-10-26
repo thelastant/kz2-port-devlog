@@ -1,5 +1,25 @@
 ﻿# Development log
 
+## 2026-10-27 - complete import map recovered
+
+- Found the per-library import descriptors in the executable. Each one names a
+  library, carries a 32-bit identifier per function, and points at that
+  library's block of the dispatch table.
+- All 23 libraries are now named and accounted for - sysPrxForUser, cellGcmSys,
+  cellSpurs, sys_fs, cellAudio, cellSysutil and the rest - and their blocks add
+  up exactly to the 342 thunk slots in the binary. Nothing is unaccounted for.
+- The boot therefore no longer says "slot 263"; it says the truth:
+  the first required import is sysPrxForUser[14], called from startup with no
+  arguments.
+- Remaining gap, stated plainly: the per-function identifiers are sorted 32-bit
+  values, but they are not SHA-1, SHA-256 or MD5 of the obvious export names in
+  any form tried. Until that hash is identified, individual functions are known
+  by library and index only, and will be implemented against observed behaviour
+  rather than guessed names.
+- Runtime tests: 103 passing
+- Recompiler tests: 53 passing
+- Coverage unchanged: 47,823 of 47,929 functions decoded, zero real gaps.
+- The port is not yet playable.
 ## 2026-10-27 - full import table bound; first import identified by slot
 
 - Corrected the import table: it lives at a different address and is four times
