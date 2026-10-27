@@ -1,5 +1,23 @@
 # Development log
 
+## 2026-10-27 - fonts: initialise honestly, and refuse what we cannot draw
+
+- With threads, graphics and frames working, the boot reached font initialisation. The port
+  now answers the font library's setup properly: the caller's configuration is validated
+  the way the library validates it, and the library object handed back is real memory with
+  the documented fields, because the game stores that pointer and passes it to every later
+  font call.
+- The next call asks for an actual font. On hardware that comes from the console's own
+  system fonts; this port has neither those files nor a font rasteriser. It therefore
+  refuses with the library's own "no support function" code and prints the requested font
+  type once, instead of handing back a font object that could never produce a glyph.
+- The refusal is tolerated by the game - it warns and continues - which took the boot
+  another **40,940** blocks and a fifth completed frame.
+- The next stop is save-data initialisation, which is the first subsystem where the port's
+  storage mapping (`/dev_hdd0` to the save directory) becomes user-visible.
+- Tests: harness 17.
+- The port is not yet playable.
+
 ## 2026-10-27 - the missing TLS image, and the first frames
 
 - A stubborn assertion about a full "allocation map" turned out to have nothing to do with
