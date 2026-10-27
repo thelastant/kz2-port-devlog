@@ -1,5 +1,25 @@
 # Development log
 
+## 2026-10-27 - the missing TLS image, and the first frames
+
+- A stubborn assertion about a full "allocation map" turned out to have nothing to do with
+  memory pressure. The game asks a thread-local configuration question, and the port had
+  been giving every thread a blank copy of that state, so the answer was always the same
+  and always wrong.
+- The real state exists in the executable: a small initialised block that a loader is
+  supposed to copy into each thread's local storage before the first instruction runs. The
+  port now does exactly that.
+- The same investigation found a second, quieter bug next to it: one of the graphics
+  structures had been placed inside that thread-local page, so reading a thread-local flag
+  could observe a graphics counter instead. The structures moved; the flag is now a flag.
+- With the real values in place the assertion disappears, and the game does something it
+  has never done in this port: it submits **frames**. Six submissions, four completed
+  flips, 4.45 million executed blocks.
+- The boot now stops on font initialisation, which is where menus begin. That is the next
+  subsystem, not another mystery.
+- Tests: graphics layer 9, harness 13.
+- The port is not yet playable, but it is now rendering its own frames.
+
 ## 2026-10-26 - the guest stopped waiting
 
 - The boot had reached the game's main loop and sat in it: four thousand sleeps, twenty
