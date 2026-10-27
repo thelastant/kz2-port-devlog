@@ -18,8 +18,9 @@ same input. RPCS3 is an oracle; its code is not used.
 - Native static-recompiler pipeline for the original PowerPC code, including a
   basic-block dispatcher and recursive direct-call import.
 - Boot reaches graphics initialisation, configures the display, and submits **frames** -
-  four completed flips and six command submissions (32,768 words) - before stopping on
-  font initialisation. **4,450,328** executed blocks.
+  six completed flips and eight command submissions (32,768 words). File-system and font
+  initialisation now complete as well; the boot stops later, in the save/asset path.
+  **4,644,637** executed blocks.
 - A runtime fallback interprets blocks the static translation does not contain, so new
   control-flow targets no longer require a full rebuild to explore.
 - Current closure: **49,070 functions** and **428,755 native basic blocks** compiled

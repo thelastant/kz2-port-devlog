@@ -1,5 +1,29 @@
 # Development log
 
+## 2026-10-27 - threads keep their own state, and the caches begin to open
+
+- A short memory-clear loop in the file-system worker never terminated. It was not a
+  translation problem: switching threads saved only the general-purpose registers, so the
+  condition flags, count register and floating-point/vector register files of one thread
+  were visible to the next, and the loop kept testing another thread's flags. Each thread
+  now owns its full register state, which removed the last of the long stalls and let the
+  boot leave the file-system initialisation it had been stuck in.
+- The file layer then reached its first real open, and was refused. The port honoured only
+  one of the console's file-open modes, so "create this file" arrived as "open this
+  existing file". The complete flag set is now decoded, including create, truncate and
+  append, with the console's own error codes returned instead of a single blanket answer.
+- The result: the file system's cache index is created at the expected location and opened
+  successfully. It is still empty, so the file layer retries while the game moves on - the
+  next stop is elsewhere, in the save/asset path.
+- Build work: a full rebuild is now **34m57s** against 36m33s before. Measurement showed
+  the shard crates were already built with the optimiser off, so the remaining cost was
+  codegen bookkeeping and a jobserver stall between parallel crates, not optimisation. The
+  exact toolchain invocation is now pinned in a script so a build cannot silently run with
+  a different configuration.
+- Runtime tests: 195 passing.
+- The port is not yet playable, but it now gets through file-system initialisation, font
+  initialisation, and several completed frames.
+
 ## 2026-10-27 - fonts: initialise honestly, and refuse what we cannot draw
 
 - With threads, graphics and frames working, the boot reached font initialisation. The port
