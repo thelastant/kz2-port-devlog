@@ -338,6 +338,18 @@ and state finalisation. The oracle's syscall trace does not expose engine-intern
 structures, so this needs either console-side memory visibility or a runtime hook
 that logs worker ownership per request.
 
+Ruled out by evidence, so they are not revisited:
+
+- **descriptor numbering** - the port now numbers from the console's first non-stream
+  handle; the boot is unchanged, so it was a real deviation but not the cause;
+- **light-weight mutex ownership and contention** - both variants were built and
+  measured; one deadlocked, the other matched the baseline exactly, so neither is
+  the cause;
+- **free space** - the game's API surface includes a free-space query but the oracle
+  trace contains no call to it;
+- **open-flag translation** - the oracle's library forwards flags to the kernel call
+  unchanged, so the console's read-write flag is what the game itself passed.
+
 ## How it is validated
 
 The oracle is the retail disc booted headless in RPCS3 with tracing enabled. Its
