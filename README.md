@@ -28,7 +28,7 @@ level load, gameplay, saves and settings.
 
 ## Progress
 
-**127 done · 54 open.** ✅ done and verified · ⬜ outstanding ·
+**128 done · 54 open.** ✅ done and verified · ⬜ outstanding ·
 `(in progress)` being worked now · `(parked)` tried and reverted, kept on a branch.
 
 <details>
@@ -248,7 +248,7 @@ level load, gameplay, saves and settings.
 </details>
 
 <details>
-<summary><b>14. Validation, oracle work and tooling</b> — 30 done · 6 open</summary>
+<summary><b>14. Validation, oracle work and tooling</b> — 31 done · 6 open</summary>
 
 - ✅ Oracle: retail disc booted headless in RPCS3 with tracing enabled
 - ✅ Syscall inventory captured from the oracle (43 lv2 calls, 28 HLE calls)
@@ -280,6 +280,7 @@ level load, gameplay, saves and settings.
 - ✅ Host file errors reported as what they are (`EACCES`, `EISDIR`, `ENOTDIR`, `ENOTEMPTY`) instead of always "not found"
 - ✅ Cache files: deletion verified, and a recreated file now carries a newer change time
 - ✅ Cold-cache oracle boot captured: the console writes a 1 MB index in one pass, bit-identical to the cached copy
+- ✅ Retry loop identified as the engine's reopen service, and proved not to inspect the cache contents
 - ⬜ Explain why the game asks for create-only where the console asks read-write (issue #4)
 - ⬜ Explain why the module-load set differs between the two boots
 - ✅ Trace gates for file calls, syscalls, imports, memory and synchronisation
@@ -344,6 +345,14 @@ Two further measured divergences, from the mechanical trace comparison:
   it once. The console also issues device queries around each cache open; those
   live inside the library entry point the port replaces, so their absence is
   expected rather than a defect.
+
+The retry loop itself has now been identified: it is the engine's **reopen service**,
+which walks a table of managed files and reopens any entry it finds closed. Two
+measurements pin it down: planting the console's own cache in the port changes
+nothing (61 opens, zero reads, files untouched), so the loop never inspects the
+cache; and the handle from each open is written into a stack descriptor while the
+table entry stays closed, with no close call anywhere in the boot. On the console
+the same service exits on its first pass.
 
 Not yet established: whether the console sees the same ordering between completion
 and state finalisation. The oracle's syscall trace does not expose engine-internal
