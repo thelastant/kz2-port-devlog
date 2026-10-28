@@ -1,5 +1,23 @@
 # Development log
 
+## 2026-10-28 - the stall is scheduling, not a missing system call
+
+- After a day of fixing kernel contracts with measurable but insufficient effect, the question changed from "which call is wrong" to "which *interleaving* is wrong". The answer came from one experiment: make the thread-switch interval configurable and see what the boot does with it.
+- It does everything.
+
+  ```
+  quantum   1   129,555 blocks   15 file opens   crashes early
+  quantum  16   152,357 blocks   35 file opens   crashes early
+  quantum  64 60,000,000 blocks    0 file opens   spins to the block limit
+  quantum 256 4,636,309 blocks   31 file opens   reaches the asset abort
+  ```
+
+  The console runs these threads on separate hardware threads with priorities and preemption. This port runs one at a time and switches every 256 blocks - close enough to get through start-up, and wrong at every other setting. That is not a missing kernel call; it is a scheduling-fidelity problem.
+- The deadlock itself is three lines of trace: the scheduler wakes both file-layer threads, runs for about 1,400 blocks before it blocks, and by then the threads have signalled into an empty queue and gone back to sleep. On the console the same handshake happens in six microseconds, in the opposite order.
+- Everything learned is now in one place rather than scattered across the day's notes: the blocker, the console's cold-boot sequence, every suspect closed with the measurement that closed it, what each fix did to the boot in order, and what finishing it needs.
+- Finishing it means modelling lv2 priorities and making a woken thread eligible immediately, rather than a fixed round-robin. The acceptance test is unchanged and blunt: a `cellFsWrite` in the trace and `cache.idx` growing past zero.
+- Tests: 210. The port is not yet playable; it still stops in the engine's asset lookup.
+
 ## 2026-10-28 - the SPURS queue object, and a null result reported as one
 
 - The last of the three contributor issues was about a SPURS queue whose state lived only on our side while the consumer reads the object in guest memory. The trace answered the ordering question first: the queue **is** initialised and attached, and the push is **never called** anywhere in the boot.
