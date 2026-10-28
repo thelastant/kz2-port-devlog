@@ -31,25 +31,6 @@ level load, gameplay, saves and settings.
 **118 done · 51 open.** ✅ done and verified · ⬜ outstanding ·
 `(in progress)` being worked now · `(parked)` tried and reverted, kept on a branch.
 
-| # | Section | ✅ | ⬜ |
-| --- | --- | ---: | ---: |
-| 1 | [Project foundations](#1-project-foundations) | 12 | 2 |
-| 2 | [Loading and translation](#2-loading-and-translation) | 12 | 2 |
-| 3 | [Kernel and threading](#3-kernel-and-threading) | 21 | 2 |
-| 4 | [Memory and mappers](#4-memory-and-mappers) | 6 | 3 |
-| 5 | [File system](#5-file-system) | 15 | 3 |
-| 6 | [Assets and data formats](#6-assets-and-data-formats) | 6 | 3 |
-| 7 | [Graphics and display](#7-graphics-and-display) | 6 | 7 |
-| 8 | [Audio and video out](#8-audio-and-video-out) | 2 | 3 |
-| 9 | [Fonts and text](#9-fonts-and-text) | 4 | 3 |
-| 10 | [Save data](#10-save-data) | 2 | 3 |
-| 11 | [SPU and SPURS](#11-spu-and-spurs) | 5 | 4 |
-| 12 | [Input](#12-input) | 0 | 3 |
-| 13 | [Menus, level load and gameplay](#13-menus-level-load-and-gameplay) | 0 | 9 |
-| 14 | [Validation, oracle work and tooling](#14-validation-oracle-work-and-tooling) | 21 | 3 |
-| 15 | [Verified measurements](#15-verified-measurements) | 6 | 1 |
-| | **Total** | **118** | **51** |
-
 <details>
 <summary><b>1. Project foundations</b> — 12 done · 2 open</summary>
 
@@ -308,7 +289,6 @@ level load, gameplay, saves and settings.
 - ⬜ Profile the runtime once execution advances past the boot
 
 </details>
-
 
 ## Current blocker, in full
 
