@@ -1,5 +1,15 @@
 # Development log
 
+## 2026-10-28 - a bug in our own interpreter, found by watching a bitmap
+
+- The investigation had narrowed to a single thing: the engine gives up on a cache it opened successfully because it cannot obtain a **file-object slot** — the allocator returns zero on every call, so nothing records the descriptor and the poll repeats.
+- That allocator is one of the blocks our **interpreter** covers rather than a lifted one, and the reason it failed was ours: the interpreter tested the counter-branch polarity backwards. `bdz` and `bdnz` were swapped, so every loop driven by the hardware counter that ran in the interpreter ran the wrong number of times. The allocator's 256-bit scan looked at one bit, declared the table full and returned zero, with a bitmap that was almost entirely clear.
+- Corrected, with three tests pinning the semantics: a counter loop with CTR = n runs its body n times, `bdz` branches only at zero, and a plain conditional branch leaves the counter alone.
+- **Measured: 61 cache opens became 9, and the run reaches the same asset abort 36,000 blocks earlier.** So this was real and its effect is larger than any of the console-contract fixes made today — and still not enough: the end state is unchanged, nine threads asleep with the two file-layer threads waiting on one condition.
+- Worth stating plainly: this bug was in *our* emulation, not in the game. It was found by watching a bitmap the guest was scanning, not by reading more of the guest.
+- Tests: 205 runtime, 24 harness. The harness suite is not part of the standard test run because linking it takes far longer than everything else; the command is recorded where the build is pinned.
+- The port is not yet playable; it still stops in the engine's asset lookup.
+
 ## 2026-10-28 - the boot ends as a deadlock, not a fault
 
 - The harness now prints every thread's state at the end of a run, and the picture is much clearer than "the engine aborts": at block 4,645,689 **nine threads are asleep and nothing can wake them**.
