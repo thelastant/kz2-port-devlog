@@ -28,7 +28,7 @@ level load, gameplay, saves and settings.
 
 ## Progress
 
-**130 done · 54 open.** ✅ done and verified · ⬜ outstanding ·
+**131 done · 54 open.** ✅ done and verified · ⬜ outstanding ·
 `(in progress)` being worked now · `(parked)` tried and reverted, kept on a branch.
 
 <details>
@@ -248,7 +248,7 @@ level load, gameplay, saves and settings.
 </details>
 
 <details>
-<summary><b>14. Validation, oracle work and tooling</b> — 33 done · 6 open</summary>
+<summary><b>14. Validation, oracle work and tooling</b> — 34 done · 6 open</summary>
 
 - ✅ Oracle: retail disc booted headless in RPCS3 with tracing enabled
 - ✅ Syscall inventory captured from the oracle (43 lv2 calls, 28 HLE calls)
@@ -283,6 +283,7 @@ level load, gameplay, saves and settings.
 - ✅ Retry loop identified as the engine's reopen service, and proved not to inspect the cache contents
 - ✅ Lightweight and system mutexes modelled (owner, hand-off, release on condition wait) — measured: the boot does not contend on either
 - ✅ Thread ids start at 1, because the guest reads 0 as "no owner"
+- ✅ Interpreter counter branches (`bdz`/`bdnz`) corrected — they were swapped, which cost the engine its file-object slots; 61 cache opens became 9
 - ⬜ Explain why the game asks for create-only where the console asks read-write (issue #4)
 - ⬜ Explain why the module-load set differs between the two boots
 - ✅ Trace gates for file calls, syscalls, imports, memory and synchronisation
