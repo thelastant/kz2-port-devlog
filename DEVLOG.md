@@ -1,5 +1,14 @@
 # Development log
 
+## 2026-10-28 - the cache loop ignores the cache, and the instrument was lying
+
+- Planted the console's own cold-boot cache — the 1,043,456-byte index and its data file, byte-identical to what the console rebuilds — into the port's cache directory. Result: **nothing changed**. Same 61 create-only opens, no reads at all, no writes, identical block count, files untouched afterwards. The retry loop is not checking the cache; it never looks at it.
+- Decompiling the worker explains the shape: it is a **reopen service**. It walks a table of managed files and reopens any entry the engine has left closed, using flags recorded when the entry was registered. The 61 opens are 61 reopens of an entry that never stays open.
+- That moves the question to something much more specific: the handle is written into a **stack descriptor**, the table entry's handle is written once and never again, and the guest never calls close at all. So on this side the entry stays "closed" forever and the service loops; on the console the same loop exits on its first pass.
+- Two of our own instruments turned out to be weaker than assumed, and both are now fixed rather than trusted: the store watch silently stops after 64 records, and the file trace printed the open flags from a register **after** the call, which the guest may clobber. The build in flight captures arguments before the call and prints the descriptor pointer and the stored handle.
+- Method note, again: the analysis-database experiment ran on a copy; the live database keeps its function bodies.
+- Tests: 202. The port is not yet playable; it still stops in the engine's asset lookup.
+
 ## 2026-10-28 - the cache worker, read at last, and two answers eliminated
 
 - The function behind the file-cache retry had never been decompiled — the analysis tool had only fragments of it, so every reading of its behaviour was inference. It is now a proper function in the analysis database: 9,608 bytes, identified by its own error strings ("Error re-opening file", "Error calling fstat in reopen of"). It opens the cache with a descriptor's flags field.
