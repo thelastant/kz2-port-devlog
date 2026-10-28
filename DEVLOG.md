@@ -1,5 +1,14 @@
 # Development log
 
+## 2026-10-28 - auditing the emulator instead of the game
+
+- The bdz/bdnz bug was found by accident, which suggested the same class of defect could be hiding elsewhere. So the interpreter was checked against the architecture, not against the game.
+- Three more silent disagreements, all fixed: **word shifts by 32 or more** returned the operand unchanged instead of zero (Rust re-masks shift counts, which hid the rule); **`rldicr` kept the low bits instead of the high ones**, and `rldic`/`rldimi` missed the low bits the instruction clears; and a **wrapped word mask** (`mb > me`) was computed as an intersection, so every wrapped bit-field extraction read as zero.
+- Each has a test now, and the boot is **byte-identical** afterwards — these paths are not exercised in this boot, so they are recorded as correctness with a null result rather than as progress.
+- Worth saying what the audit has produced overall: four emulator bugs, one of which (the counter branches) was costing the engine its file-object slots. The emulator was a larger source of wrong behaviour than any of the console-contract differences chased earlier today.
+- Tests: 205 runtime, 31 harness.
+- The port is not yet playable; it still stops in the engine's asset lookup.
+
 ## 2026-10-28 - a bug in our own interpreter, found by watching a bitmap
 
 - The investigation had narrowed to a single thing: the engine gives up on a cache it opened successfully because it cannot obtain a **file-object slot** — the allocator returns zero on every call, so nothing records the descriptor and the poll repeats.
