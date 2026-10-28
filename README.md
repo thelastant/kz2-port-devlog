@@ -28,7 +28,7 @@ level load, gameplay, saves and settings.
 
 ## Progress
 
-**123 done · 53 open.** ✅ done and verified · ⬜ outstanding ·
+**127 done · 54 open.** ✅ done and verified · ⬜ outstanding ·
 `(in progress)` being worked now · `(parked)` tried and reverted, kept on a branch.
 
 <details>
@@ -248,7 +248,7 @@ level load, gameplay, saves and settings.
 </details>
 
 <details>
-<summary><b>14. Validation, oracle work and tooling</b> — 26 done · 5 open</summary>
+<summary><b>14. Validation, oracle work and tooling</b> — 30 done · 6 open</summary>
 
 - ✅ Oracle: retail disc booted headless in RPCS3 with tracing enabled
 - ✅ Syscall inventory captured from the oracle (43 lv2 calls, 28 HLE calls)
@@ -276,6 +276,11 @@ level load, gameplay, saves and settings.
 - ✅ Measured: the condition-variable block layout and mutex hand-off, the 512-byte stat block size and the distinct stat times change nothing — the boot is identical, so they are kept as correct console behaviour, not as progress
 - ⬜ Work out why the game creates the disk cache with create-only intent and never writes it, where the console opens it read-write and reads before writing
 - ✅ Measured: the user-memory total and the console's reserved slice correct — the guest consumes them (every allocation moves by exactly the reserved amount, +1,052 blocks), but the cache still never gets written
+- ✅ Firmware error-code table audited: four wrong values found and fixed, and a test pins the table
+- ✅ Host file errors reported as what they are (`EACCES`, `EISDIR`, `ENOTDIR`, `ENOTEMPTY`) instead of always "not found"
+- ✅ Cache files: deletion verified, and a recreated file now carries a newer change time
+- ✅ Cold-cache oracle boot captured: the console writes a 1 MB index in one pass, bit-identical to the cached copy
+- ⬜ Explain why the game asks for create-only where the console asks read-write (issue #4)
 - ⬜ Explain why the module-load set differs between the two boots
 - ✅ Trace gates for file calls, syscalls, imports, memory and synchronisation
 - ⬜ Console-side visibility into engine-internal structures (needed to settle the current ordering question)
@@ -321,7 +326,10 @@ What is established, in order:
 
 Verified against the oracle: the console creates the cache files read-write with
 descriptor 3 and 4, writes the header in 512-byte chunks, and produces a
-bit-identical cache image on repeated first boots.
+bit-identical cache image on repeated first boots. A cold boot with no cache at all
+does the same work in one pass — 1,043,456 bytes written to the index in about six
+milliseconds — and builds a file bit-identical to the cached copy, so the cache is
+deterministic for a given asset set.
 
 Two further measured divergences, from the mechanical trace comparison:
 

@@ -1,5 +1,17 @@
 # Development log
 
+## 2026-10-28 - a contributor's first day: three issues, two defects, one experiment
+
+- **undecuple** got access and opened three issues the same day. All three were checked against primary evidence rather than taken on trust, and all three are now closed with the evidence linked.
+- **Error codes (their first finding).** Three constants did not match the firmware's table: a timed-out wait reached the game as a *deadlock*, out-of-memory as an *abort*, and a bad file handle as *not permitted*. An audit of every kernel error literal in the runtime found a fourth they had not mentioned — a port-binding call answering "not connected" where the meaning is "already connected". A test now pins the whole table. Boot measurement: exactly unchanged, which is what an error-path fix should do.
+- **Deletion and file times (their third).** Their Killzone 3 experience was that deletes were no-ops on Windows and the game looped reopening a cache it could not remove. Here deletes really happen — but the test found something just as bad: after delete and recreate, the **change time did not move**, because Windows keeps the original creation time for a same-named file recreated within seconds. A file layer that validates its cache against that time would accept the file it just rejected. It now reports the later of creation and modification, so a rebuilt cache always looks newer.
+- **The same report exposed a habit.** Every host failure on the file calls came back as "not found" — no permission, is-a-directory, directory-not-empty, all reported as the same thing. They now say what happened, and a device path the port does not serve is refused instead of quietly resolving inside the game folder.
+- **Cold against warm (their second).** They pointed out that a cold and a warm boot are different experiments, and ours was warm. Reproduced: with no cache at all, the console creates both files read-write and writes **1,043,456 bytes** to the index in about six milliseconds, then goes to the disc. The file it builds is bit-identical to the cached one.
+- That narrows the real question to one bit of intent: the game under this runtime asks for **create-only**, where the console's game asks **read-write**, cold and warm alike. That is now issue #4 rather than a guess, with the static work on the flags builder as the next step.
+- Tooling: a cold-boot harness that restores the warm cache afterwards, a collaboration status command, an issue triage view, and an export that refuses to publish over a contributor's push. Every issue closed here says what was fixed and links the commit.
+- Tests: 202. Builds: one full (32m23s) and one harness relink.
+- The port is not yet playable; it still stops in the engine's asset lookup.
+
 ## 2026-10-28 - the console's memory figures, and a probe that had gone quiet
 
 - The port was telling the engine it had a **192 MiB** user-memory region, all of it free.
