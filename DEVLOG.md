@@ -1,5 +1,16 @@
 # Development log
 
+## 2026-10-28 - three contributor issues, and a boot that keeps moving
+
+- undecuple read the new mutex code and filed three issues. Two were defects in what had just been written, one was a gap further out; all three are answered here.
+- **The syscall numbering was swapped** — 102 is `lock`, 103 is `trylock`, and the arm had them the other way round. A contended lock returned "busy" at once, so a caller that did not check the result entered its critical section without the mutex; a contended trylock blocked instead. The unit test repeated the same wrong number, which is exactly how such a thing survives review.
+- **A woken condition waiter could return without its mutex**: the hand-back function existed and had no callers. Signals now hand it over, or queue the waiter until it holds it. The four waits (`lwcond`, `lwmutex`, `mutex`, `cond`) also had **no timeouts at all** — the timeout argument was ignored and "timed out" was unreachable; all four now honour it.
+- The lightweight mutex layout was wrong in a way that only matters when the game reads the object itself: the recursive depth sat on the word that is the waiting-locker count on the console. It is at the console's offset now.
+- **Measured, one build and one run each: 9 → 21 → 31 cache opens, 4,609,672 → 4,619,414 → 4,636,309 blocks, and still no cache write.** Every sync correction moves the boot, and none of them reaches the write, so the remaining gap between a working mutex hand-off and a written cache is somewhere else.
+- On the SPURS issue: the import trace shows the LF queue **initialised and attached, and never pushed to** — no `PushBody`, no event-flag wait anywhere in the boot. So the initialiser writing nothing into the guest object is a real defect on the path, while the push cannot be exercised until the run gets further. Said so in the issue rather than closing it on code review.
+- Tests: 208. Two issues closed with the commit, one kept open with the trace.
+- The port is not yet playable; it still stops in the engine's asset lookup.
+
 ## 2026-10-28 - auditing the emulator instead of the game
 
 - The bdz/bdnz bug was found by accident, which suggested the same class of defect could be hiding elsewhere. So the interpreter was checked against the architecture, not against the game.
