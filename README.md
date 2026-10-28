@@ -28,7 +28,7 @@ level load, gameplay, saves and settings.
 
 ## Progress
 
-**122 done · 54 open.** ✅ done and verified · ⬜ outstanding ·
+**123 done · 53 open.** ✅ done and verified · ⬜ outstanding ·
 `(in progress)` being worked now · `(parked)` tried and reverted, kept on a branch.
 
 <details>
@@ -248,7 +248,7 @@ level load, gameplay, saves and settings.
 </details>
 
 <details>
-<summary><b>14. Validation, oracle work and tooling</b> — 25 done · 6 open</summary>
+<summary><b>14. Validation, oracle work and tooling</b> — 26 done · 5 open</summary>
 
 - ✅ Oracle: retail disc booted headless in RPCS3 with tracing enabled
 - ✅ Syscall inventory captured from the oracle (43 lv2 calls, 28 HLE calls)
@@ -275,7 +275,7 @@ level load, gameplay, saves and settings.
 - ✅ Cross-checked against Project Helghast's Killzone 3 port (same engine family) and adopted its documented contract fixes: the condition-variable block layout and mutex hand-off, the 512-byte stat block size, and distinct stat times
 - ✅ Measured: the condition-variable block layout and mutex hand-off, the 512-byte stat block size and the distinct stat times change nothing — the boot is identical, so they are kept as correct console behaviour, not as progress
 - ⬜ Work out why the game creates the disk cache with create-only intent and never writes it, where the console opens it read-write and reads before writing
-- ⬜ Correct the reported user-memory total to the console's figure (currently 10% short)
+- ✅ Measured: the user-memory total and the console's reserved slice correct — the guest consumes them (every allocation moves by exactly the reserved amount, +1,052 blocks), but the cache still never gets written
 - ⬜ Explain why the module-load set differs between the two boots
 - ✅ Trace gates for file calls, syscalls, imports, memory and synchronisation
 - ⬜ Console-side visibility into engine-internal structures (needed to settle the current ordering question)
@@ -328,7 +328,9 @@ Two further measured divergences, from the mechanical trace comparison:
 - the port asks for the cache index with create intent only (flags 0x40) where the
   console asks read-write (0x42) and then reads before writing. The oracle's library
   forwards those flags to the kernel call unchanged, so this is guest state, not a
-  translation step the port skipped;
+  translation step the port skipped. The byte the engine turns into those flags has
+  now been sampled at the moment of the open and reads 0, which is what produces
+  create-only; whether the console's own byte is also 0 there is not observable;
 - the port **retries the cache index** where the console moves on to the cache
   data file, and it stats the cache directory three times where the console stats
   it once. The console also issues device queries around each cache open; those
@@ -339,6 +341,11 @@ Not yet established: whether the console sees the same ordering between completi
 and state finalisation. The oracle's syscall trace does not expose engine-internal
 structures, so this needs either console-side memory visibility or a runtime hook
 that logs worker ownership per request.
+
+One instrument is now known to be blunt: the request object lives in guest heap
+memory, so every probe address moves whenever the memory layout changes. The harness
+now follows the pointer the wait is handed instead of a fixed address; a run whose
+probe had silently gone quiet was caught this way.
 
 Ruled out by evidence, so they are not revisited:
 
@@ -356,7 +363,11 @@ Ruled out by evidence, so they are not revisited:
   order of the "in progress" and "done" writes;
 - **stat block size and stat times** - the same build reported 512-byte blocks and
   three distinct times; no change, including no change to which descriptors the game
-  opens or how many times it retries.
+  opens or how many times it retries;
+- **user-memory total and available** - the console's own figures are reported now,
+  and the guest consumes them (every allocation moves by exactly the reserved slice,
+  the boot runs 1,052 blocks longer and returns through a different frame), but not
+  one file call changes and the cache is still never written.
 
 ## How it is validated
 

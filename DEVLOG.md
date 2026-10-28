@@ -1,5 +1,30 @@
 # Development log
 
+## 2026-10-28 - the console's memory figures, and a probe that had gone quiet
+
+- The port was telling the engine it had a **192 MiB** user-memory region, all of it free.
+  The console answers the same query with **223,346,688 bytes total and 203,554,816 available**
+  at the game's first ask - so the region is now the console's size, and the same 18.875 MiB is
+  declared held back. It has to be declared: the port has no firmware allocations to account
+  for, and inventing a smaller total would be worse than saying what the machine says.
+- The guest **does** consume the figures. Every allocation in the memory dump moved by exactly
+  the reserved amount, the boot runs **1,052 blocks longer** (4,644,637 to 4,645,689) and the
+  fatal path returns through a different frame. The outcome is unchanged: same trap, same 61
+  create-only opens of the cache index, no write, cache still empty.
+- All 132 request-state transitions are identical, **including their block numbers**, and the
+  syscall summary line is byte-for-byte the same. So the file-layer stall is not driven by
+  memory pressure either.
+- A trap worth recording: those transitions briefly dropped to **one line**. The watched
+  request object lives in memory the guest allocated, so growing the region moved it - and the
+  probe kept sampling the old address, quietly reporting nothing. The harness now follows the
+  pointer the wait is actually handed, and says so in the log when it moves. A probe that goes
+  silent now announces it instead of looking like a result.
+- With the corrected probe, the byte the engine turns into open flags reads **0** at the moment
+  the cache index is opened - which is exactly why the port asks to create rather than to
+  read-write. Whether the console's own byte is 0 there cannot be seen from its syscall trace.
+- Tests: 199. Builds: one full (32m55s), plus a six-second harness relink.
+- The port is not yet playable; it still stops in the engine's asset lookup.
+
 ## 2026-10-28 - the three borrowed contracts are right, and change nothing
 
 - Built the batch that carried every fix borrowed from Project Helghast at once, then ran it
