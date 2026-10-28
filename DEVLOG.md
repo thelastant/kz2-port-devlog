@@ -1,5 +1,14 @@
 # Development log
 
+## 2026-10-28 - the cache poll has an end, and nothing reads the disc after it
+
+- Put the 61 cache opens on the block timeline for the first time. They run from block **113,605** to **155,821** - roughly every 700 blocks - and then stop.
+- That kills the working assumption. The completion write happens at block **115,663** and the state word clears at 116,196, *inside* that window, so the poll outlives the completion it was supposed to be waiting for. It is a bounded wait that gives up after about 42,000 blocks (≈42 ms of the port's virtual clock), not a spin.
+- The more useful part is what comes after: from block 155,821 to the abort at 4.6 million, the file trace records **no file call at all**. The engine never opens `data_ps3.psarc` or any other asset file. So the asset failure is not caused by a file that could not be read - nothing is read.
+- The console, for comparison, does three things in order: writes the cache index (12.94 s), opens the 6.5 GB `data_ps3.psarc` immediately (12.95 s), and half a second later creates an **SPU thread group of five**. This port creates no SPU thread group at all - `sys_spu_initialize` runs once and nothing follows - which is the next concrete divergence once the engine gets that far, since the game's asset path decompresses on SPUs.
+- Two questions now, in order: why the engine gives up on a cache it successfully opened, and what it needs before it will read the disc at all.
+- Tests: 205. The port is not yet playable; it still stops in the engine's asset lookup.
+
 ## 2026-10-28 - another port's notes, two real contracts, and a boot that ignores both
 
 - Read **Project Pyrrhus** - undecuple's own Killzone 2 port, same engine family, MIT - and took its documented console behaviour rather than its code. Its notes describe the exact failure shape here: the file layer signals **two media threads**, and a counting wake-up lets one wake twice while the other sleeps on with its request.
