@@ -310,6 +310,18 @@ level load, gameplay, saves and settings.
 
 ## Current blocker, in full
 
+**Updated 2026-10-28: the stall is scheduling fidelity, not a missing system call.** The
+boot's behaviour depends far more on how threads interleave than on any kernel contract:
+with the switch interval set to 1 or 16 blocks it crashes early, at 64 it spins to the
+block limit without opening a single file, and at 256 it gets all the way to the asset
+lookup. The console runs these threads on separate hardware threads with priorities and
+preemption; this port runs one at a time on a fixed quantum. The file layer's own
+handshake shows the consequence in three lines - the scheduler wakes both its workers,
+runs for about 1,400 blocks before blocking, and by then they have signalled into an
+empty queue and gone back to sleep. What remains is to model lv2 priorities and to make a
+woken thread eligible immediately.
+
+
 The engine initialises a disk cache through its own I/O layer before it can resolve
 asset packages. In this port that initialisation does not complete, so the asset
 registry stays empty and the engine aborts by design with "could not locate
