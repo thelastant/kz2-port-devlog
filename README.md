@@ -369,10 +369,13 @@ data, and its analysis notes and run logs stay out of it.
 
 It is MIT licensed. Credits and third-party notices are in NOTICE.md there:
 
-- **Project Helghast** by undecuple (MIT) - the Killzone 3 port on the same engine family,
-  whose documented findings shaped several fixes here;
-- **ps3recomp** by sp00nznet (MIT) - reference for PS3 runtime and library semantics;
-- **RPCS3** (GPL-2.0) - a behavioural oracle only; no code is used or linked.
+- **[undecuple](https://github.com/undecuple)** - Project Helghast (MIT), the Killzone 3 port
+  on the same engine family, whose documented findings shaped several fixes here;
+- **[sp00nznet](https://github.com/sp00nznet)** - ps3recomp (MIT), reference for PS3 runtime
+  and library semantics;
+- **[thelastant](https://github.com/thelastant)** - author and maintainer;
+- **[RPCS3](https://github.com/RPCS3)** team (GPL-2.0) - a behavioural oracle only; no code is
+  used or linked.
 
 ## Repository layout
 
