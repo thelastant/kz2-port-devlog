@@ -28,7 +28,7 @@ level load, gameplay, saves and settings.
 
 ## Progress
 
-**118 done · 51 open.** ✅ done and verified · ⬜ outstanding ·
+**120 done · 53 open.** ✅ done and verified · ⬜ outstanding ·
 `(in progress)` being worked now · `(parked)` tried and reverted, kept on a branch.
 
 <details>
@@ -248,7 +248,7 @@ level load, gameplay, saves and settings.
 </details>
 
 <details>
-<summary><b>14. Validation, oracle work and tooling</b> — 21 done · 3 open</summary>
+<summary><b>14. Validation, oracle work and tooling</b> — 23 done · 5 open</summary>
 
 - ✅ Oracle: retail disc booted headless in RPCS3 with tracing enabled
 - ✅ Syscall inventory captured from the oracle (43 lv2 calls, 28 HLE calls)
@@ -270,6 +270,10 @@ level load, gameplay, saves and settings.
 - ✅ Mode-byte sampler for the byte the worker turns into open flags
 - ✅ Operation-state word semantics identified (in progress / done / invalid)
 - ✅ Mechanical file-trace comparison against the oracle, aware of encoding and quoting differences
+- ✅ Machine-parameter audit: every start-up system parameter, the user-memory figure and the module-load set compared against the oracle
+- ✅ All eight start-up system parameters answered (four were refused before the audit)
+- ⬜ Correct the reported user-memory total to the console's figure (currently 10% short)
+- ⬜ Explain why the module-load set differs between the two boots
 - ✅ Trace gates for file calls, syscalls, imports, memory and synchronisation
 - ⬜ Console-side visibility into engine-internal structures (needed to settle the current ordering question)
 - ⬜ Per-subsystem behavioural comparison beyond the boot sequence
