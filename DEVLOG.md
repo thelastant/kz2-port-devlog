@@ -1,5 +1,15 @@
 # Development log
 
+## 2026-10-28 - the cache worker, read at last, and two answers eliminated
+
+- The function behind the file-cache retry had never been decompiled — the analysis tool had only fragments of it, so every reading of its behaviour was inference. It is now a proper function in the analysis database: 9,608 bytes, identified by its own error strings ("Error re-opening file", "Error calling fstat in reopen of"). It opens the cache with a descriptor's flags field.
+- That killed both easy explanations in one pass. The code that decodes the request's mode byte and would produce **read-write|create** exists, is correct, and **never executes** on this path. And the descriptor the call receives does not hold the flags either — it reads 0 or 3 where the register carries `0x40`.
+- So the value that keeps the cache read-only is assigned somewhere not yet instrumented. That is a smaller question than "why does the cache not initialise", and it is now the only question on this path.
+- Also established: the static table of file descriptors gets its path written three times during the boot, but its flags field is **never written at all**.
+- Method note: the destructive part (removing an overlapping function, creating the worker) ran on a **copy** of the analysis database. The live one keeps its function bodies, and the single body widened mid-pass was narrowed back to its analysed range.
+- Tests: 202. Source and the shared repository updated; the issue stays open until the assignment is found.
+- The port is not yet playable; it still stops in the engine's asset lookup.
+
 ## 2026-10-28 - a contributor's first day: three issues, two defects, one experiment
 
 - **undecuple** got access and opened three issues the same day. All three were checked against primary evidence rather than taken on trust, and all three are now closed with the evidence linked.
