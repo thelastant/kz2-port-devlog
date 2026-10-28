@@ -1,43 +1,57 @@
 # kz2-port
 
-A native Windows Rust port of Killzone 2, developed against a user-supplied
-retail disc dump. The original game is used only as a behavioural and data
-reference. No game binaries, assets, or decompiled output are distributed.
+A native Windows Rust port of Killzone 2, built from a user-supplied retail disc dump.
+The original game is used only as a behavioural and data reference. No game binaries,
+assets, or decompiled output are distributed.
 
-## Goal
+**Goal** — a 1:1 playable port with no PS3 emulation in the runtime: boot, menus,
+level load, gameplay, saves and settings.
 
-A 1:1 playable port with no PS3 emulation layer in the runtime: boot, menus,
-level load, gameplay, saves, and settings.
+**Rules**
 
-Two rules shape the project:
+- **Evidence before code.** Systems are derived from the retail executable and checked
+  against the original game running in RPCS3 on the same input. RPCS3 is an oracle for
+  behaviour and a reference for kernel contracts; none of its runtime code is used.
+- **Never fake progress.** Unimplemented behaviour fails loudly with the library's own
+  error. Nothing is stubbed with silent success, and no guest data is fabricated.
 
-- **Evidence before code.** Every system is derived from the retail executable and
-  checked against the original game running in RPCS3 on the same input. RPCS3 is
-  an oracle for behaviour and a reference for kernel contracts; none of its
-  runtime code is used.
-- **Never fake progress.** A subsystem that is not implemented fails loudly with
-  the library's own error instead of returning a plausible value. Nothing is
-  stubbed with silent success, and no guest data is fabricated to get past a check.
-
-## Status at a glance
+## At a glance
 
 | | |
 | --- | --- |
-| Boot | graphics, file-system and font initialisation reached; frames submitted |
+| Boot | graphics, file system and fonts initialised; frames submitted |
 | Executed blocks | **4,644,637** (latest validated build) |
 | Submissions | 8 command submissions, 32,768 words, 6 completed flips |
 | Static translation | **49,070 functions**, **428,755 basic blocks** |
 | Runtime tests | **196** passing, plus recompiler and harness suites |
 | Playable? | **No** — the boot stops in the engine's own asset lookup |
 
----
+## Progress
 
-# Progress checklist
+**118 done · 51 open.** ✅ done and verified · ⬜ outstanding ·
+`(in progress)` being worked now · `(parked)` tried and reverted, kept on a branch.
 
-✅ done and verified · ⬜ outstanding · `(in progress)` being worked now ·
-`(parked)` tried and reverted, kept on a branch
+| # | Section | ✅ | ⬜ |
+| --- | --- | ---: | ---: |
+| 1 | [Project foundations](#1-project-foundations) | 12 | 2 |
+| 2 | [Loading and translation](#2-loading-and-translation) | 12 | 2 |
+| 3 | [Kernel and threading](#3-kernel-and-threading) | 21 | 2 |
+| 4 | [Memory and mappers](#4-memory-and-mappers) | 6 | 3 |
+| 5 | [File system](#5-file-system) | 15 | 3 |
+| 6 | [Assets and data formats](#6-assets-and-data-formats) | 6 | 3 |
+| 7 | [Graphics and display](#7-graphics-and-display) | 6 | 7 |
+| 8 | [Audio and video out](#8-audio-and-video-out) | 2 | 3 |
+| 9 | [Fonts and text](#9-fonts-and-text) | 4 | 3 |
+| 10 | [Save data](#10-save-data) | 2 | 3 |
+| 11 | [SPU and SPURS](#11-spu-and-spurs) | 5 | 4 |
+| 12 | [Input](#12-input) | 0 | 3 |
+| 13 | [Menus, level load and gameplay](#13-menus-level-load-and-gameplay) | 0 | 9 |
+| 14 | [Validation, oracle work and tooling](#14-validation-oracle-work-and-tooling) | 21 | 3 |
+| 15 | [Verified measurements](#15-verified-measurements) | 6 | 1 |
+| | **Total** | **118** | **51** |
 
-## 1. Project foundations
+<details>
+<summary><b>1. Project foundations</b> — 12 done · 2 open</summary>
 
 - ✅ Rust workspace: core, runtime, assets, render, recompiler, boot harness, 16 generated shards
 - ✅ Pinned toolchain and MinGW link paths captured in `tools/build.ps1`
@@ -54,7 +68,10 @@ Two rules shape the project:
 - ⬜ Split generated shards from the runtime ABI so logic edits stop rebuilding 16 crates
 - ⬜ Trim the translation closure to the functions a boot actually reaches
 
-## 2. Loading and translation
+</details>
+
+<details>
+<summary><b>2. Loading and translation</b> — 12 done · 2 open</summary>
 
 - ✅ Retail executable parse: ELF headers, segments, entry point
 - ✅ Import resolution across the game's libraries (342 imports, 23 libraries)
@@ -71,7 +88,10 @@ Two rules shape the project:
 - ⬜ Executable hot-patching / self-modifying code
 - ⬜ Runtime-loaded overlays and additional modules beyond the initial set
 
-## 3. Kernel and threading
+</details>
+
+<details>
+<summary><b>3. Kernel and threading</b> — 21 done · 2 open</summary>
 
 - ✅ lv2 syscall table cross-checked against the oracle's (451 entries, name for name)
 - ✅ PPU threads: create, start, exit, join, get-id, stack information
@@ -97,7 +117,10 @@ Two rules shape the project:
 - ⬜ Real-time priority inversion / priority inheritance
 - ⬜ Thread renaming, affinity and debug interfaces
 
-## 4. Memory and mappers
+</details>
+
+<details>
+<summary><b>4. Memory and mappers</b> — 6 done · 3 open</summary>
 
 - ✅ Guest memory with mapped/unmapped fault reporting
 - ✅ `sys_memory_allocate` and user memory size queries
@@ -109,7 +132,10 @@ Two rules shape the project:
 - ⬜ Memory protection changes and guard pages
 - ⬜ Full IO address-space capacity (the engine maps many 1 MB chunks at level load)
 
-## 5. File system
+</details>
+
+<details>
+<summary><b>5. File system</b> — 15 done · 3 open</summary>
 
 - ✅ `cellFs*` and `sys_fs_*` share one implementation, so both entry points have the same semantics
 - ✅ Open, close, read, write, lseek
@@ -130,7 +156,10 @@ Two rules shape the project:
 - ⬜ `sys_fs_fcntl` device-query path exercised the way the console exercises it
 - ⬜ Blu-ray specific surface beyond plain files
 
-## 6. Assets and data formats
+</details>
+
+<details>
+<summary><b>6. Assets and data formats</b> — 6 done · 3 open</summary>
 
 - ✅ PSARC archive reader
 - ✅ Serialised object reader
@@ -142,7 +171,10 @@ Two rules shape the project:
 - ⬜ Streaming packages and level packages
 - ⬜ Animation clip and state-machine data
 
-## 7. Graphics and display
+</details>
+
+<details>
+<summary><b>7. Graphics and display</b> — 6 done · 7 open</summary>
 
 - ✅ Graphics context creation and teardown
 - ✅ Display configuration: 720x480 progressive, correct pitch and gamma
@@ -158,7 +190,10 @@ Two rules shape the project:
 - ⬜ IO mapping capacity for level-load chunk mapping
 - ⬜ Report/DMA callbacks driven by the title's own frame data
 
-## 8. Audio and video out
+</details>
+
+<details>
+<summary><b>8. Audio and video out</b> — 2 done · 3 open</summary>
 
 - ✅ Audio system initialised; channel and encoder configuration queried
 - ✅ Video-out configuration and state reporting
@@ -166,7 +201,10 @@ Two rules shape the project:
 - ⬜ Encoder and downmix selection honoured
 - ⬜ Output device enumeration and format negotiation
 
-## 9. Fonts and text
+</details>
+
+<details>
+<summary><b>9. Fonts and text</b> — 4 done · 3 open</summary>
 
 - ✅ Font library initialisation completes with a real handle in guest memory
 - ✅ Caller configuration validated the way the library validates it
@@ -176,7 +214,10 @@ Two rules shape the project:
 - ⬜ Glyph rasterisation and text layout
 - ⬜ Console system-font data source
 
-## 10. Save data
+</details>
+
+<details>
+<summary><b>10. Save data</b> — 2 done · 3 open</summary>
 
 - ✅ Save API surface answers with real library error codes
 - ✅ Save root mapped to the host save directory
@@ -184,7 +225,10 @@ Two rules shape the project:
 - ⬜ Auto-load and auto-save flows
 - ⬜ Listing, deleting and copying saves
 
-## 11. SPU and SPURS
+</details>
+
+<details>
+<summary><b>11. SPU and SPURS</b> — 5 done · 4 open</summary>
 
 - ✅ SPU image parsing for images embedded in the executable
 - ✅ SPU instruction executor with opcode coverage
@@ -196,13 +240,19 @@ Two rules shape the project:
 - ⬜ SPU threads scheduled alongside PPU threads
 - ⬜ Task exit / enabled-bit interleaving verified (known hazard for thread-pool teardown)
 
-## 12. Input
+</details>
+
+<details>
+<summary><b>12. Input</b> — 0 done · 3 open</summary>
 
 - ⬜ Pad initialisation and capability reporting
 - ⬜ Pad state and data delivery
 - ⬜ Input mapping and deadzones
 
-## 13. Menus, level load and gameplay
+</details>
+
+<details>
+<summary><b>13. Menus, level load and gameplay</b> — 0 done · 9 open</summary>
 
 - ⬜ Asset lookup completing (blocked by file-cache initialisation)
 - ⬜ Front-end and menu flow
@@ -214,7 +264,10 @@ Two rules shape the project:
 - ⬜ Settings persistence
 - ⬜ Save/load integration
 
-## 14. Validation, oracle work and tooling
+</details>
+
+<details>
+<summary><b>14. Validation, oracle work and tooling</b> — 21 done · 3 open</summary>
 
 - ✅ Oracle: retail disc booted headless in RPCS3 with tracing enabled
 - ✅ Syscall inventory captured from the oracle (43 lv2 calls, 28 HLE calls)
@@ -241,7 +294,10 @@ Two rules shape the project:
 - ⬜ Per-subsystem behavioural comparison beyond the boot sequence
 - ⬜ Automated regression suite wired into the build
 
-## 15. Verified measurements
+</details>
+
+<details>
+<summary><b>15. Verified measurements</b> — 6 done · 1 open</summary>
 
 - ✅ Pre-fix frontier: 4,603,057 blocks, stopped inside a memory-clear loop
 - ✅ After the per-thread register fix: 4,614,390 blocks, file layer reached
@@ -251,7 +307,8 @@ Two rules shape the project:
 - ✅ Runtime test count progression: 193 → 194 → 195 → 196
 - ⬜ Profile the runtime once execution advances past the boot
 
----
+</details>
+
 
 ## Current blocker, in full
 
