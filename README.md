@@ -93,7 +93,7 @@ Two rules shape the project:
 - [x] Return-to-dispatcher marker kept distinct from a real jump to null
 - [x] Regression test: a thread switch preserves per-thread register state
 - [x] Parked: strict light-weight mutex ownership — the first attempt initialised the owner field to the kernel's "free" value and deadlocked, because the guest treats a cleared field as free
-- [x] (in progress) Light-weight mutex contention under the guest's own encoding
+- [x] (parked) Light-weight mutex contention under the guest's own encoding — built and measured; boot behaviour was identical to the baseline (same block count, same stop, no extra file activity), so it is kept on a branch instead of merged
 - [ ] Real-time priority inversion / priority inheritance
 - [ ] Thread renaming, affinity and debug interfaces
 
@@ -126,7 +126,7 @@ Two rules shape the project:
 - [x] Fixed: descriptors numbered from the console's first non-stream handle; the engine reads a zero descriptor as "no file"
 - [x] Regression test: every access mode and the create flag
 - [x] Regression test: descriptors start after the standard streams
-- [x] (in progress) File-cache initialisation completing inside the engine — current blocker
+- [ ] (in progress) File-cache initialisation completing inside the engine - current blocker
 - [ ] `sys_fs_fcntl` device-query path exercised the way the console exercises it
 - [ ] Blu-ray specific surface beyond plain files
 
