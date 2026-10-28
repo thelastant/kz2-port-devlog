@@ -233,10 +233,13 @@ Two rules shape the project:
 - ✅ Oracle log miners for paths, HLE calls, inventory and ordering
 - ✅ Probes: block entry with link register, interpreter-level, request dereference, object mode
 - ✅ Store watch over a memory range, and a block-clock request-state sampler
+- ✅ Mode-byte sampler for the byte the worker turns into open flags
+- ✅ Operation-state word semantics identified (in progress / done / invalid)
+- ✅ Mechanical file-trace comparison against the oracle, aware of encoding and quoting differences
 - ✅ Trace gates for file calls, syscalls, imports, memory and synchronisation
 - ⬜ Console-side visibility into engine-internal structures (needed to settle the current ordering question)
 - ⬜ Per-subsystem behavioural comparison beyond the boot sequence
-- ⬜ Automated regression comparison against oracle traces
+- ⬜ Automated regression suite wired into the build
 
 ## 15. Verified measurements
 
@@ -275,6 +278,19 @@ What is established, in order:
 Verified against the oracle: the console creates the cache files read-write with
 descriptor 3 and 4, writes the header in 512-byte chunks, and produces a
 bit-identical cache image on repeated first boots.
+
+Two further measured divergences, from the mechanical trace comparison:
+
+- the port asks for the cache index **read-only** (open flags 0x40) where the
+  console asks read-write (0x42). The oracle's library forwards those flags to the
+  kernel call unchanged, so this is guest state, not a translation step the port
+  skipped - most likely the mode byte the worker turns into flags, which is now
+  sampled every time it changes;
+- the port **retries the cache index** where the console moves on to the cache
+  data file, and it stats the cache directory three times where the console stats
+  it once. The console also issues device queries around each cache open; those
+  live inside the library entry point the port replaces, so their absence is
+  expected rather than a defect.
 
 Not yet established: whether the console sees the same ordering between completion
 and state finalisation. The oracle's syscall trace does not expose engine-internal
