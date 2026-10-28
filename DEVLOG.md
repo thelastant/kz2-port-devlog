@@ -1,5 +1,15 @@
 # Development log
 
+## 2026-10-28 - the game played to the first level, and what a level load costs
+
+- The retail disc was driven from the language screen through the main menu and difficulty into **Corinth River**, the first campaign level, with the virtual pad. That needed two things that were not obvious: RPCS3's keyboard pad handler has to be selected in its configuration, and key presses must go through Win32 events - the usual automation route only reaches the game list, never the render surface.
+- With a run in a level, the file layer could be profiled for the first time at a point past start-up. From the log tail, counted mechanically: **96 opens, every one of them a `.pspatch` file** - 18 hashes, each requested from both the disc and the installed game directory - **30.4 MB written** to the two cache descriptors and **394 MB read**.
+- The consequence for the port is sharper than the start-up numbers suggested: the disk cache is **not** a start-up artefact. The console writes 1 MB while initialising and another **30 MB during a level load**, into the same descriptor pair. A port that never performs the first write cannot reach the second, and the level's asset path never runs.
+- Patch files are part of every load: the engine looks for a per-asset `.pspatch` on the disc and in the install directory. A port that serves only the disc tree takes a different branch for all 96 of those opens.
+- Also recorded: the two cache descriptors are 3 and 4 in the load as well as at start-up, which independently confirms that the cache pair is the first two files the process opens.
+- New tools: `rpcs3_press.py` (Win32 key events at the emulator window), `rpcs3_screenshot.py`, `oracle_level_load.py` (streams a multi-gigabyte log tail and counts opens, writes and reads), and `rpcs3_mem.py`, which reads guest memory over RPCS3's debug stub because `gdb` cannot talk to it.
+- Tests: 210. The port itself is not yet playable; it still stops in the engine's asset lookup.
+
 ## 2026-10-28 - the stall is scheduling, not a missing system call
 
 - After a day of fixing kernel contracts with measurable but insufficient effect, the question changed from "which call is wrong" to "which *interleaving* is wrong". The answer came from one experiment: make the thread-switch interval configurable and see what the boot does with it.
