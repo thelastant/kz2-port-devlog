@@ -1,5 +1,25 @@
 # Development log
 
+## 2026-10-28 - the toolchain written down, and a second pair of hands
+
+- Wrote down **everything** the work rests on, in one place: the reverse-engineering
+  toolchain (Ghidra and its headless scripts, the REA analysis server, the JDK, the
+  disassembly library, Python), the oracle setup (RPCS3, plus the small automation that drives
+  its memory-dump dialog so captures run with nobody at the keyboard), the architecture
+  references consulted for the processor and the console, the two open projects whose findings
+  shaped fixes here, and the build toolchain. It is one document, not a scattered list.
+- The source repository was rebuilt as a **clean, shareable tree**: only the Rust workspace,
+  the tools, the licence, the credits, the contributing guide and a README written for that
+  repository. Fifty function-name tables, ninety-one analysis scripts and the private
+  workspace's own documentation are gone from it, along with every path that only means
+  something on this machine.
+- **undecuple** - author of Project Helghast, the Killzone 3 port on the same engine family -
+  now has write access to the source repository, and is credited as a contributor with a link
+  to their page wherever credits appear.
+- The build carrying the condition-variable, block-size and stat-time fixes is still
+  compiling; the boot measurement that decides whether they help is still pending.
+- The port is not yet playable; it still stops in the engine's asset lookup.
+
 ## 2026-10-28 - inputs audited instead of internals, and a cross-check with the Killzone 3 port
 
 - Six rebuilds of engine-internal probing had not moved the boot, so the work changed shape:

@@ -363,14 +363,17 @@ directly observed is recorded as untested rather than assumed.
 
 ## Source and credits
 
-The source tree, tools and documentation live in a **private** repository,
-	helastant/kz2-port; this page and the devlog are public. The repository ships no game
-data, and its analysis notes and run logs stay out of it.
+The source tree, tools and documentation live in the **private** repository
+[thelastant/kz2-port](https://github.com/thelastant/kz2-port); this page and the devlog are
+public. That repository ships no game data, and its analysis notes and run logs stay out of it.
 
-It is MIT licensed. Credits and third-party notices are in NOTICE.md there:
+It is MIT licensed. Credits and third-party notices are in `NOTICE.md` there, and
+[`docs/ACKNOWLEDGEMENTS.md`](https://github.com/thelastant/kz2-port/blob/main/docs/ACKNOWLEDGEMENTS.md)
+lists every tool, specification and reference the work relies on.
 
 - **[undecuple](https://github.com/undecuple)** - Project Helghast (MIT), the Killzone 3 port
-  on the same engine family, whose documented findings shaped several fixes here;
+  on the same engine family, whose documented findings shaped several fixes here; now also a
+  contributor with write access to the source repository;
 - **[sp00nznet](https://github.com/sp00nznet)** - ps3recomp (MIT), reference for PS3 runtime
   and library semantics;
 - **[thelastant](https://github.com/thelastant)** - author and maintainer;
