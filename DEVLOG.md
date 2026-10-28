@@ -1,5 +1,14 @@
 # Development log
 
+## 2026-10-28 - the SPURS queue object, and a null result reported as one
+
+- The last of the three contributor issues was about a SPURS queue whose state lived only on our side while the consumer reads the object in guest memory. The trace answered the ordering question first: the queue **is** initialised and attached, and the push is **never called** anywhere in the boot.
+- So the initialiser was fixed and the producer was split out. The object now exists where the console puts it - counters, size, depth, buffer with its valid bit, direction, initialised flag, signal address and event-queue id - and a push advances the guest's own counter and writes into the slot it selects, instead of bumping a host index that never went down.
+- **Measured: byte-identical. 4,636,309 blocks, 31 cache opens, no writes.** Exactly what was predicted before the build: nothing in this boot reads the object yet. It is recorded as a null result, not as progress.
+- The half that cannot be exercised - the consumer registering itself, the push waking it through the attached event queue, the 16-bit sub-counters and the blocking flag - is now its own issue, with the trace as its evidence and an acceptance test that needs a run reaching the first push.
+- Two tests drive the queue object directly, so the layout and the counter arithmetic are pinned even though the boot cannot reach them.
+- Tests: 210. The port is not yet playable; it still stops in the engine's asset lookup.
+
 ## 2026-10-28 - three contributor issues, and a boot that keeps moving
 
 - undecuple read the new mutex code and filed three issues. Two were defects in what had just been written, one was a gap further out; all three are answered here.
