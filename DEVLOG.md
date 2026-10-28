@@ -1,5 +1,14 @@
 # Development log
 
+## 2026-10-28 - the boot ends as a deadlock, not a fault
+
+- The harness now prints every thread's state at the end of a run, and the picture is much clearer than "the engine aborts": at block 4,645,689 **nine threads are asleep and nothing can wake them**.
+- Two wait on event queues **with no deadline** (the schedulers), seven wait on condition variables — including both fios media threads, which wait on the *same* condition object. The main thread is the only one running, and it reaches the asset abort without ever reading the disc.
+- Neither of the two threads that finish exits early: they finish in the last 100,000 blocks. So the poll that gives up at block 155,821 is not ended by a worker dying — the media threads are alive and waiting.
+- The condition the media threads wait on sits 0x20 bytes above the request object the poll was writing. Nothing in the whole trace signals that object after the poll ends; the signals that do happen are for its neighbour.
+- So the whole boot hinges on one missing completion: the media threads sleep, the schedulers wait for the events those media threads would have posted, and the main thread proceeds without asset I/O until it fails.
+- Tests: 205. The port is not yet playable.
+
 ## 2026-10-28 - the cache poll has an end, and nothing reads the disc after it
 
 - Put the 61 cache opens on the block timeline for the first time. They run from block **113,605** to **155,821** - roughly every 700 blocks - and then stop.
