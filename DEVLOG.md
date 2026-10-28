@@ -1,5 +1,28 @@
 # Development log
 
+## 2026-10-28 - inputs audited instead of internals, and a cross-check with the Killzone 3 port
+
+- Six rebuilds of engine-internal probing had not moved the boot, so the work changed shape:
+  instead of asking what one more internal field does, the port's *inputs* were compared
+  against the console's. A single audit found more than the probing had.
+- Four start-up system parameters were being refused with an error where the console answers
+  them: date format, time format, parental level and the "has an NP account" flag. All eight
+  the game asks for are answered now, with the console's defaults.
+- The console reports 213 MiB of user memory; the port reported 192 MiB, a 10% shortfall the
+  engine sizes its heap-backed structures from. Queued for its own change so the effect can be
+  attributed.
+- With evidence rather than reasoning, three suspects were closed: descriptor numbering was a
+  real deviation but not the cause, both mutex-ownership variants were measured (one regressed,
+  one was a null result), and free space is not involved because the game never queries it.
+- Cross-checked with **Project Helghast**, the Killzone 3 port on the same engine family. Its
+  notes supplied three concrete contracts the port had wrong: the condition-variable block
+  carries the paired mutex address at its first word (the engine reads it and stalls when it is
+  not a usable mutex), the stat block size is 512 bytes rather than 4096, and stat reports three
+  distinct file times which the engine's file cache validates against. All three are
+  implemented with tests; the boot measurement is pending.
+- Test suite: 198 passing.
+- The port is not yet playable; it still stops in the engine's asset lookup.
+
 ## 2026-10-27 - threads keep their own state, and the caches begin to open
 
 - A short memory-clear loop in the file-system worker never terminated. It was not a

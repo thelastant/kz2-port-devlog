@@ -272,6 +272,8 @@ level load, gameplay, saves and settings.
 - ✅ Mechanical file-trace comparison against the oracle, aware of encoding and quoting differences
 - ✅ Machine-parameter audit: every start-up system parameter, the user-memory figure and the module-load set compared against the oracle
 - ✅ All eight start-up system parameters answered (four were refused before the audit)
+- ✅ Cross-checked against Project Helghast's Killzone 3 port (same engine family) and adopted its documented contract fixes: the condition-variable block layout and mutex hand-off, the 512-byte stat block size, and distinct stat times
+- ⬜ Confirm the condition-variable, block-size and stat-time fixes change the boot (build and run pending)
 - ⬜ Correct the reported user-memory total to the console's figure (currently 10% short)
 - ⬜ Explain why the module-load set differs between the two boots
 - ✅ Trace gates for file calls, syscalls, imports, memory and synchronisation
@@ -358,6 +360,19 @@ descriptor numbering and file layout. Behaviour is compared against those traces
 not against intuition. Where the oracle cannot answer — engine-internal state
 machines, for instance — the port's own instrumentation is used, and anything not
 directly observed is recorded as untested rather than assumed.
+
+## Source and credits
+
+The source tree, tools and documentation live in a **private** repository,
+	helastant/kz2-port; this page and the devlog are public. The repository ships no game
+data, and its analysis notes and run logs stay out of it.
+
+It is MIT licensed. Credits and third-party notices are in NOTICE.md there:
+
+- **Project Helghast** by undecuple (MIT) - the Killzone 3 port on the same engine family,
+  whose documented findings shaped several fixes here;
+- **ps3recomp** by sp00nznet (MIT) - reference for PS3 runtime and library semantics;
+- **RPCS3** (GPL-2.0) - a behavioural oracle only; no code is used or linked.
 
 ## Repository layout
 
