@@ -1,5 +1,16 @@
 # Development log
 
+## 2026-10-28 - another port's notes, two real contracts, and a boot that ignores both
+
+- Read **Project Pyrrhus** - undecuple's own Killzone 2 port, same engine family, MIT - and took its documented console behaviour rather than its code. Its notes describe the exact failure shape here: the file layer signals **two media threads**, and a counting wake-up lets one wake twice while the other sleeps on with its request.
+- That exposed two genuine defects in this port. The lightweight mutex calls answered success and **never touched the guest word** - and the word *is* the lock, so a thread could never see itself as the owner. And the system mutex, which is what the file layer actually uses, was documented as "no ownership tracking is needed yet": six lock/unlock pairs and three mutexes, all no-ops.
+- Both are now real: owner and recursive depth tracked, waiters queued, the mutex **handed** to the first waiter at unlock, `EBUSY` for a trylock on a held mutex, `EPERM` for a foreign unlock, and a condition wait that **releases** its bound mutex before blocking and takes it back on wake. Thread ids also start at 1 now - they started at 0, which the guest reads as "no owner", and came from the same counter as queue ids.
+- **The boot did not move: 4,645,689 blocks, 61 opens, no writes, same trap, twice.** The first null result explained itself: the boot's syscall list contains no lightweight-mutex call at all - the file layer uses the *system* mutex. The second says the six lock/unlock pairs were already uncontended, so mutual exclusion is not the stall.
+- What is left is narrower than before: the engine polls - open, fstat, retry about every 80 blocks - while an operation it submitted never reports completion. Every contract around that poll has now been corrected and measured. The missing piece is inside the engine's own request path.
+- Method note: the old unit test that asserted a foreign unlock *succeeds* was itself encoding the bug, and was corrected rather than deleted.
+- Tests: 205. Credits for Project Pyrrhus added to the notices, with what was taken.
+- The port is not yet playable; it still stops in the engine's asset lookup.
+
 ## 2026-10-28 - the cache loop ignores the cache, and the instrument was lying
 
 - Planted the console's own cold-boot cache — the 1,043,456-byte index and its data file, byte-identical to what the console rebuilds — into the port's cache directory. Result: **nothing changed**. Same 61 create-only opens, no reads at all, no writes, identical block count, files untouched afterwards. The retry loop is not checking the cache; it never looks at it.
