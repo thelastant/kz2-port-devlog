@@ -28,7 +28,7 @@ level load, gameplay, saves and settings.
 
 ## Progress
 
-**120 done · 53 open.** ✅ done and verified · ⬜ outstanding ·
+**122 done · 54 open.** ✅ done and verified · ⬜ outstanding ·
 `(in progress)` being worked now · `(parked)` tried and reverted, kept on a branch.
 
 <details>
@@ -248,7 +248,7 @@ level load, gameplay, saves and settings.
 </details>
 
 <details>
-<summary><b>14. Validation, oracle work and tooling</b> — 23 done · 5 open</summary>
+<summary><b>14. Validation, oracle work and tooling</b> — 25 done · 6 open</summary>
 
 - ✅ Oracle: retail disc booted headless in RPCS3 with tracing enabled
 - ✅ Syscall inventory captured from the oracle (43 lv2 calls, 28 HLE calls)
@@ -273,7 +273,8 @@ level load, gameplay, saves and settings.
 - ✅ Machine-parameter audit: every start-up system parameter, the user-memory figure and the module-load set compared against the oracle
 - ✅ All eight start-up system parameters answered (four were refused before the audit)
 - ✅ Cross-checked against Project Helghast's Killzone 3 port (same engine family) and adopted its documented contract fixes: the condition-variable block layout and mutex hand-off, the 512-byte stat block size, and distinct stat times
-- ⬜ Confirm the condition-variable, block-size and stat-time fixes change the boot (build and run pending)
+- ✅ Measured: the condition-variable block layout and mutex hand-off, the 512-byte stat block size and the distinct stat times change nothing — the boot is identical, so they are kept as correct console behaviour, not as progress
+- ⬜ Work out why the game creates the disk cache with create-only intent and never writes it, where the console opens it read-write and reads before writing
 - ⬜ Correct the reported user-memory total to the console's figure (currently 10% short)
 - ⬜ Explain why the module-load set differs between the two boots
 - ✅ Trace gates for file calls, syscalls, imports, memory and synchronisation
@@ -324,11 +325,10 @@ bit-identical cache image on repeated first boots.
 
 Two further measured divergences, from the mechanical trace comparison:
 
-- the port asks for the cache index **read-only** (open flags 0x40) where the
-  console asks read-write (0x42). The oracle's library forwards those flags to the
-  kernel call unchanged, so this is guest state, not a translation step the port
-  skipped - most likely the mode byte the worker turns into flags, which is now
-  sampled every time it changes;
+- the port asks for the cache index with create intent only (flags 0x40) where the
+  console asks read-write (0x42) and then reads before writing. The oracle's library
+  forwards those flags to the kernel call unchanged, so this is guest state, not a
+  translation step the port skipped;
 - the port **retries the cache index** where the console moves on to the cache
   data file, and it stats the cache directory three times where the console stats
   it once. The console also issues device queries around each cache open; those
@@ -350,7 +350,13 @@ Ruled out by evidence, so they are not revisited:
 - **free space** - the game's API surface includes a free-space query but the oracle
   trace contains no call to it;
 - **open-flag translation** - the oracle's library forwards flags to the kernel call
-  unchanged, so the console's read-write flag is what the game itself passed.
+  unchanged, so the console's read-write flag is what the game itself passed;
+- **condition-variable block layout and mutex hand-off** - implemented to the
+  console's contract and measured: the boot is byte-for-byte identical, including the
+  order of the "in progress" and "done" writes;
+- **stat block size and stat times** - the same build reported 512-byte blocks and
+  three distinct times; no change, including no change to which descriptors the game
+  opens or how many times it retries.
 
 ## How it is validated
 

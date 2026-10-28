@@ -1,5 +1,27 @@
 # Development log
 
+## 2026-10-28 - the three borrowed contracts are right, and change nothing
+
+- Built the batch that carried every fix borrowed from Project Helghast at once, then ran it
+  once so the result could be attributed: the condition-variable block layout, the hand-off of
+  the paired mutex to a woken waiter, the 512-byte stat block size and three distinct file
+  times.
+- **Result: identical.** Same failure, same block count to the digit, same sequence of file
+  calls, no write to the disk cache. The fixes are kept - they are console behaviour and they
+  have tests - but they are not credited with progress, and the page now says so instead of
+  leaving a "pending" box.
+- The sync trace also shows the new hand-off path really runs: the same producers write the
+  "in progress" and "done" words in the same order at the same block counts as before. Nothing
+  in the scheduling moved.
+- The one real difference left on this path, measured mechanically against the oracle: the
+  console opens the cache index **read-write** and reads it before writing, while the game in
+  the port opens it **create-only**, never writes, and re-opens a fresh descriptor on every
+  retry. Whether that is the cause or a consequence of the stuck state is not known yet; the
+  oracle run that produced the trace started with a cache left by an earlier boot, so a fresh
+  console boot has not been compared.
+- Tests: 198 passing. Build: one, 33m43s at 15 jobs.
+- The port is not yet playable; it still stops in the engine's asset lookup.
+
 ## 2026-10-28 - the toolchain written down, and a second pair of hands
 
 - Wrote down **everything** the work rests on, in one place: the reverse-engineering
