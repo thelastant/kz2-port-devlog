@@ -1,5 +1,28 @@
 # Development log
 
+## 2026-10-29 - the cache loop is now counted exactly, and the stall has a concrete shape
+
+- A full trace with the file layer's report enabled settles the earlier uncertainty over the
+  open flags: across 61,884 opens of the cache index - every one create-only, every one
+  successful, none read-write - there is not a single write, read, or close. The handle number
+  climbs monotonically from 3 to past 61,000, so the engine opens the same file and never
+  releases it.
+- The loop is not a busy retry: after a successful open and a successful stat of the file, the
+  engine waits on a condition variable that is never signalled, so the higher-level code
+  re-submits the open. Two of the engine's worker threads are blocked on that same condition
+  and two more on event queues, which is why the port reaches its step limit with the cache
+  index still empty.
+- This is consistent with, and sharpens, the earlier "request wait reports in-progress"
+  finding: the wait is now named as a specific condition in the engine's file layer, not an
+  unlocalised state-word hang.
+- Also recorded this session: the engine's SPU architecture, from a public GDC 2009 talk, as
+  the target shape for the port's scheduler and graphics - six SPUs, roughly 44 job types and
+  a thousand jobs a frame, a deferred renderer with a quarter-resolution SPU post-processing
+  chain composited by the GPU.
+- Tests: 214. The level viewer still runs on retail data; the game itself is still not
+  playable, and the acceptance test is unchanged - a write in the trace and the cache index
+  above zero.
+
 ## 2026-10-29 - the cache directory is created, and the missing write has a name
 
 - The engine's start-up for its disk cache is a short chain: check the working directory,
