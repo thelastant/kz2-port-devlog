@@ -1,5 +1,21 @@
 # Development log
 
+## 2026-10-29 - the empty cache body is a completion record, not missing entries
+
+- Followed the write routine from its first instruction instead of from its call site.
+  `FUN_007cfa78` takes the fios request object in r3 and reads its own fields
+  (`+0x188` enable flag, `+0x13c` slot count, `+0x144` offset, `+0x19c` element size), so it is
+  the request's write completion, not a free-standing serialiser.
+- It formats `"/%s.%s"` with `"cache.dat"`, waits on the block fetch (`0x7e6d40`), and then
+  stores `FUN_007ecb48`'s result at the request's offset. `FUN_007ecb48` is `li r11,0x91; sc`
+  followed by `mulld r3,r3,0x3b9aca00`: the system clock, seconds scaled to nanoseconds.
+- So the 64 KB "index body" write carries a timestamp at offset 0 and zeros after it. Nothing
+  failed to serialise: the engine wrote exactly what it prepared.
+- The record geometry is 40 bytes per entry (`index * 0x28`), which also corrects an earlier
+  guess of 512-byte records.
+- Next: trace who sets the request's slot count and per-entry offset before the write, since
+  they are the fields that decide whether any real entry is ever placed in the block.
+
 ## 2026-10-29 - the cache write routing is correct, but the index is still empty
 
 - The previous entry fixed where the cache writes go; this entry reports what they contain. The
