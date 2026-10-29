@@ -1,5 +1,19 @@
 # Development log
 
+## 2026-10-29 - the cache bootstrap completes: the index is written correctly
+
+- The cache build was blocked by a second interpreter/recompiler bug: the doubleword
+  compare (`cmpdi`/`cmpldi`) was decoded as the word form. The engine's entry allocator uses a
+  256-bit free-list bitmap and tests a bit with a doubleword compare, so a set bit in the upper
+  32 bits was always read as clear, the same entry was handed out for both cache files, and
+  every index write went to the data file.
+- With the decode fixed, the port now builds the cache exactly like the console: 17 writes to
+  the index (1,043,456 bytes) and one 512-byte header to the data file. The acceptance bar - a
+  write in the trace and a cache index above zero - is met.
+- The boot then advances past the cache to the next step and stops at the engine's own
+  "could not locate application specific assets" report, which is the asset lookup that
+  follows cache initialisation - the next frontier.
+
 ## 2026-10-29 - the create-only open is fixed; the engine now writes its cache
 
 - The cache index was opened create-only (0x40) here but read-write (0x42) on the console. The

@@ -19,16 +19,16 @@ level load, gameplay, saves and settings.
 
 | | |
 | --- | --- |
-| Boot | graphics, file system and fonts initialised; frames submitted |
-| Executed blocks | **60,000,000** (latest build reaches the harness step limit; no fault) |
+| Boot | graphics, file system, fonts and the disk cache initialised |
+| Executed blocks | **4.7M** to the asset-lookup fault (the cache bootstrap now completes) |
 | Submissions | 8 command submissions, 32,768 words, 6 completed flips |
-| Static translation | **49,070 functions**, **428,755 basic blocks** |
+| Static translation | **49,070 functions**, **428,755 basic blocks** (whole-closure decoder lift) |
 | Runtime tests | **214** passing, plus recompiler and harness suites |
 | Playable? | **No** — the boot stops in the engine's own asset lookup |
 
 ## Progress
 
-**137 done · 54 open.** ✅ done and verified · ⬜ outstanding ·
+**140 done · 51 open.** ✅ done and verified · ⬜ outstanding ·
 `(in progress)` being worked now · `(parked)` tried and reverted, kept on a branch.
 
 <details>
@@ -137,7 +137,7 @@ level load, gameplay, saves and settings.
 - ✅ Fixed: descriptors numbered from the console's first non-stream handle; the engine reads a zero descriptor as "no file"
 - ✅ Regression test: every access mode and the create flag
 - ✅ Regression test: descriptors start after the standard streams
-- ⬜ (in progress) File-cache initialisation completing inside the engine - current blocker
+- ✅ Fixed: the doubleword compare (`cmpdi`/`cmpldi`) was decoded as the word form, so the file layer's free-list bitmap bit test always read a set bit in the upper 32 bits as clear - the same cache-file entry was handed out twice and the index was written to the data file. With it fixed, the cache initialisation completes with the console's exact write split (17 writes to the 1 MB index, one 512-byte header to the data file)
 - ⬜ `sys_fs_fcntl` device-query path exercised the way the console exercises it
 - ⬜ Blu-ray specific surface beyond plain files
 
@@ -152,7 +152,7 @@ level load, gameplay, saves and settings.
 - ✅ Mesh reader
 - ✅ Skeleton reader
 - ✅ Skinning reader
-- ⬜ Asset registry / lump resolution through the engine's own cache
+- ⬜ (in progress) Asset registry / lump resolution through the engine's own cache - current blocker
 - ⬜ Streaming packages and level packages
 - ⬜ Animation clip and state-machine data
 
@@ -239,7 +239,7 @@ level load, gameplay, saves and settings.
 <details>
 <summary><b>13. Menus, level load and gameplay</b> — 0 done · 9 open</summary>
 
-- ⬜ Asset lookup completing (blocked by file-cache initialisation)
+- ⬜ Asset lookup completing (current blocker)
 - ⬜ Front-end and menu flow
 - ⬜ Level loading and streaming
 - ⬜ Scripting runtime
@@ -278,7 +278,7 @@ level load, gameplay, saves and settings.
 - ✅ All eight start-up system parameters answered (four were refused before the audit)
 - ✅ Cross-checked against Project Helghast's Killzone 3 port (same engine family) and adopted its documented contract fixes: the condition-variable block layout and mutex hand-off, the 512-byte stat block size, and distinct stat times
 - ✅ Measured: the condition-variable block layout and mutex hand-off, the 512-byte stat block size and the distinct stat times change nothing — the boot is identical, so they are kept as correct console behaviour, not as progress
-- ⬜ Work out why the game creates the disk cache with create-only intent and never writes it, where the console opens it read-write and reads before writing
+- ✅ Create-only vs read-write (issue #4) was a real decode bug, not guest state: `cmpwi`/`cmplwi` treated `r0` as literal zero, dropping the read-write access bits. With it fixed the open carries read-write and the cache is written
 - ✅ Measured: the user-memory total and the console's reserved slice correct — the guest consumes them (every allocation moves by exactly the reserved amount, +1,052 blocks), but the cache still never gets written
 - ✅ Firmware error-code table audited: four wrong values found and fixed, and a test pins the table
 - ✅ Host file errors reported as what they are (`EACCES`, `EISDIR`, `ENOTDIR`, `ENOTEMPTY`) instead of always "not found"
@@ -290,7 +290,7 @@ level load, gameplay, saves and settings.
 - ✅ SPURS LF queue object laid out in guest memory (counters, size, depth, buffer, signal address) with the push advancing the guest counter — measured: boot unchanged, because nothing reads it yet
 - ✅ Interpreter counter branches (`bdz`/`bdnz`) corrected — they were swapped, which cost the engine its file-object slots; 61 cache opens became 9
 - ✅ lv2 mutex numbering corrected (102 = lock, 103 = trylock), condition hand-back wired, timeouts honoured on all four sync waits, console lwmutex layout — measured: 9 → 21 → 31 cache opens
-- ⬜ Explain why the game asks for create-only where the console asks read-write (issue #4)
+- ✅ The fd swap (the index written to the data file) was a second decode bug: `cmpdi`/`cmpldi` decoded as the word form, so the free-list bitmap bit test in the upper 32 bits always read clear and the same entry was handed out twice. With it fixed the write split matches the console byte-for-byte (17 writes to the index, one header to the data file)
 - ⬜ Explain why the module-load set differs between the two boots
 - ✅ Trace gates for file calls, syscalls, imports, memory and synchronisation
 - ⬜ Console-side visibility into engine-internal structures (needed to settle the current ordering question)
@@ -314,103 +314,30 @@ level load, gameplay, saves and settings.
 
 ## Current blocker, in full
 
-**Updated 2026-10-29: the cache directory is created, and the missing write has a name.** The
-engine's file layer refused every lightweight condition wait with a permission error the
-system never returns (the console trace shows 254 of those waits and not one error); with that
-removed, sleepers woken at their deadline, and a missing path answered the way the engine's
-own directory walk expects, the port now runs the start-up chain itself: it issues the
-directory-creation request, the directory appears, and the cache file is opened and registered
-in the engine's table at the console's own relative path. The request types the engine
-dispatches went from one to four.
+**Updated 2026-10-29: the cache bootstrap now completes, and the boot advances to the asset
+lookup.** The file-cache initialisation — which had stalled the boot for weeks — is fixed.
+Two decode bugs were the cause, and both are now pinned by regression tests:
 
-The cache is still never written, and the reason is now specific: the engine registers its
-record with **no access mode**, opens create-only, and reopens forever. The read-write open is
-not mis-encoded - it is **abandoned** by a per-request flag the dispatcher tests before
-executing it, and the abandoned ones are exactly the read-write opens. The retry loop's
-create-only opens are what survive. Measurement is in place to name the source of that flag;
-the acceptance test is unchanged - a write in the trace and the cache index above zero.
+- `cmpwi`/`cmplwi` treated `r0` as literal zero (the `cmp` forms have no such rule), so the
+  read-write access bits were dropped and the cache index was opened create-only;
+- `cmpdi`/`cmpldi` were decoded as the word forms, so the file layer's free-list bitmap bit
+  test compared only the low 32 bits: a set bit in the upper 32 bits always read as "clear",
+  the same entry was handed out for both cache files, and every index write went to the data
+  file.
 
+With both fixed, the port builds the cache exactly like the console on a cold boot: 17 writes
+to the index (1,043,456 bytes, fd 3) and one 512-byte header to the data file (fd 4). The
+acceptance bar — a write in the trace and a cache index above zero — is met.
 
-The engine initialises a disk cache through its own I/O layer before it can resolve
-asset packages. In this port that initialisation does not complete, so the asset
-registry stays empty and the engine aborts by design with "could not locate
-application specific assets".
+The boot then advances past the cache and stops at the next step: the engine's own
+"could not locate application specific assets" report, which is the asset/package lookup that
+runs after cache initialisation. That lookup is the current frontier; the asset registry is
+still empty on a fresh port boot because the packages have not yet been resolved through the
+cache the way the console resolves them.
 
-What is established, in order:
-
-- the trap is the engine's own fatal helper: it formats a message and then
-  deliberately traps, so the message — not the trap — is the signal;
-- the asset lookup resolves names through the engine's cache, so an uninitialised
-  cache means an empty registry;
-- the cache initialiser opens the cache index, then (by design) the cache data
-  file, and only proceeds when its readiness check reports success;
-- that readiness check is never reached because the request wait returns a status
-  of "1";
-- "1" is the operation-state word, whose meaning is "in progress" — the completion
-  signal is set while the state word is still 1;
-- block-level sampling shows one request object touched by two worker threads: one
-  signals completion, another finalises the state 533 blocks later.
-
-Verified against the oracle: the console creates the cache files read-write with
-descriptor 3 and 4, writes the header in 512-byte chunks, and produces a
-bit-identical cache image on repeated first boots. A cold boot with no cache at all
-does the same work in one pass — 1,043,456 bytes written to the index in about six
-milliseconds — and builds a file bit-identical to the cached copy, so the cache is
-deterministic for a given asset set.
-
-Two further measured divergences, from the mechanical trace comparison:
-
-- the port asks for the cache index with create intent only (flags 0x40) where the
-  console asks read-write (0x42) and then reads before writing. The oracle's library
-  forwards those flags to the kernel call unchanged, so this is guest state, not a
-  translation step the port skipped. The byte the engine turns into those flags has
-  now been sampled at the moment of the open and reads 0, which is what produces
-  create-only; whether the console's own byte is also 0 there is not observable;
-- the port **retries the cache index** where the console moves on to the cache
-  data file, and it stats the cache directory three times where the console stats
-  it once. The console also issues device queries around each cache open; those
-  live inside the library entry point the port replaces, so their absence is
-  expected rather than a defect.
-
-The retry loop itself has now been identified: it is the engine's **reopen service**,
-which walks a table of managed files and reopens any entry it finds closed. Two
-measurements pin it down: planting the console's own cache in the port changes
-nothing (61 opens, zero reads, files untouched), so the loop never inspects the
-cache; and the handle from each open is written into a stack descriptor while the
-table entry stays closed, with no close call anywhere in the boot. On the console
-the same service exits on its first pass.
-
-Not yet established: whether the console sees the same ordering between completion
-and state finalisation. The oracle's syscall trace does not expose engine-internal
-structures, so this needs either console-side memory visibility or a runtime hook
-that logs worker ownership per request.
-
-One instrument is now known to be blunt: the request object lives in guest heap
-memory, so every probe address moves whenever the memory layout changes. The harness
-now follows the pointer the wait is handed instead of a fixed address; a run whose
-probe had silently gone quiet was caught this way.
-
-Ruled out by evidence, so they are not revisited:
-
-- **descriptor numbering** - the port now numbers from the console's first non-stream
-  handle; the boot is unchanged, so it was a real deviation but not the cause;
-- **light-weight mutex ownership and contention** - both variants were built and
-  measured; one deadlocked, the other matched the baseline exactly, so neither is
-  the cause;
-- **free space** - the game's API surface includes a free-space query but the oracle
-  trace contains no call to it;
-- **open-flag translation** - the oracle's library forwards flags to the kernel call
-  unchanged, so the console's read-write flag is what the game itself passed;
-- **condition-variable block layout and mutex hand-off** - implemented to the
-  console's contract and measured: the boot is byte-for-byte identical, including the
-  order of the "in progress" and "done" writes;
-- **stat block size and stat times** - the same build reported 512-byte blocks and
-  three distinct times; no change, including no change to which descriptors the game
-  opens or how many times it retries;
-- **user-memory total and available** - the console's own figures are reported now,
-  and the guest consumes them (every allocation moves by exactly the reserved slice,
-  the boot runs 1,052 blocks longer and returns through a different frame), but not
-  one file call changes and the cache is still never written.
+The two earlier divergences are now explained and closed: the create-only open was the `cmpwi`
+bug (issue #4), and the "retry loop" was the reopen service walking a table whose entries were
+never marked open because the same entry was being handed out twice.
 
 ## How it is validated
 
