@@ -20,7 +20,7 @@ level load, gameplay, saves and settings.
 | | |
 | --- | --- |
 | Boot | graphics, file system and fonts initialised; frames submitted |
-| Executed blocks | **4,644,637** (latest validated build) |
+| Executed blocks | **60,000,000** (latest build reaches the harness step limit; no fault) |
 | Submissions | 8 command submissions, 32,768 words, 6 completed flips |
 | Static translation | **49,070 functions**, **428,755 basic blocks** |
 | Runtime tests | **213** passing, plus recompiler and harness suites |
@@ -28,7 +28,7 @@ level load, gameplay, saves and settings.
 
 ## Progress
 
-**133 done · 54 open.** ✅ done and verified · ⬜ outstanding ·
+**137 done · 54 open.** ✅ done and verified · ⬜ outstanding ·
 `(in progress)` being worked now · `(parked)` tried and reverted, kept on a branch.
 
 <details>
@@ -92,6 +92,10 @@ level load, gameplay, saves and settings.
 - ✅ `sys_process_is_stack` answered per thread
 - ✅ `sys_ss_access_control_engine`
 - ✅ Return-to-dispatcher marker kept distinct from a real jump to null
+- ✅ Preemptive scheduling: a wake makes a higher-priority thread runnable immediately, not at the next slice edge
+- ✅ Sleepers become runnable the moment the clock passes their deadline (a thread had been asleep 224,000 blocks past its deadline)
+- ✅ Fixed: a lightweight condition wait was refused for ownership — the system's call has no such requirement, and the engine's file layer lost thousands of waits to it
+- ✅ Fixed: the system-cache mount no longer creates the file layer's own directory in advance, so the engine takes its real "create the directory" branch
 - ✅ Regression test: a thread switch preserves per-thread register state
 - ✅ Parked: strict light-weight mutex ownership — the first attempt initialised the owner field to the kernel's "free" value and deadlocked, because the guest treats a cleared field as free
 - ✅ (parked) Light-weight mutex contention under the guest's own encoding — built and measured; boot behaviour was identical to the baseline (same block count, same stop, no extra file activity), so it is kept on a branch instead of merged
@@ -303,23 +307,26 @@ level load, gameplay, saves and settings.
 - ✅ After the open-flag fix: 4,644,637 blocks, cache index created
 - ✅ Full rebuild times: 36m33s / 36m41s / 38m11s before tuning, 33–35 min after
 - ✅ Harness-only rebuild: ~5 s
-- ✅ Runtime test count progression: 193 → 194 → 195 → 196
+- ✅ Runtime test count progression: 193 → 194 → 195 → 196 → 210 → 213
 - ⬜ Profile the runtime once execution advances past the boot
 
 </details>
 
 ## Current blocker, in full
 
-**Updated 2026-10-28: the stall is scheduling fidelity, not a missing system call.** The
-boot's behaviour depends far more on how threads interleave than on any kernel contract:
-with the switch interval set to 1 or 16 blocks it crashes early, at 64 it spins to the
-block limit without opening a single file, and at 256 it gets all the way to the asset
-lookup. The console runs these threads on separate hardware threads with priorities and
-preemption; this port runs one at a time on a fixed quantum. The file layer's own
-handshake shows the consequence in three lines - the scheduler wakes both its workers,
-runs for about 1,400 blocks before blocking, and by then they have signalled into an
-empty queue and gone back to sleep. What remains is to model lv2 priorities and to make a
-woken thread eligible immediately.
+**Updated 2026-10-29: the reopen loop has a cause.** Preemption is in, and it exposed the
+real defect: every lightweight condition wait from the file layer's media threads was
+refused with a permission error the system never returns. The console trace shows 254 of
+those waits in a cold boot and not one error. Removing the invented check, waking sleepers
+at their deadline, and letting the engine create its own working directory moved the
+boot off its null fault and onto a plain reopen loop: 62,405 opens of the cache index, all
+with create-only access, still zero writes.
+
+The console's own file records, read out of the emulated machine, say what the port gets
+wrong: they carry **read-write** access and stay open. A create-only descriptor is what the
+engine's reopen service rejects. Getting the access mode right is the next step; the
+acceptance test is unchanged - a write in the trace and the cache index growing past
+zero.
 
 
 The engine initialises a disk cache through its own I/O layer before it can resolve
