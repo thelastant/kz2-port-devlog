@@ -1,5 +1,38 @@
 # Development log
 
+## 2026-10-30 - the map pipeline is decoded end to end; placement was the last missing piece
+
+- The asset side of the map work is finished. Every single-player level now loads, and levels can
+  be assembled into placed scenes rather than piles of resources.
+- Eleven levels, 237 lumps, zero load failures. The archive reader, catalog, RTTI object reader and
+  cross-file reference resolution all work for every level.
+- Mesh geometry resolves as well: sampling across levels produced no degenerate and no failed
+  meshes, with vertex counts in the millions per level.
+- The last missing piece was placement. World nodes were being walked past during parsing and
+  never decoded, so nothing carried a transform. An opt-in capture now records them without
+  changing the default parse path.
+- The transform format is confirmed from data: a 4x4 row-major affine matrix, orthonormal basis,
+  translation in the last row. A pure rotation node decodes to a clean cosine/sine pair, and the
+  identity node appears exactly as an unplaced instance should.
+- Assembled scenes look like levels. Corinth River yields over ten thousand placed nodes across a
+  2.4 x 2.7 x 3.9 kilometre extent; the small epilogue area is a few hundred units across; the
+  long linear missions stretch several kilometres along one axis. Placement scales with level size
+  the way a real scene would.
+- One correction worth recording: a first pass filtered level lumps on a single filename suffix and
+  found nothing for three levels. Lumps are named by content descriptor rather than a consistent
+  suffix, so that filter missed most geometry. Searching on the common asset prefix instead
+  multiplied the node counts by an order of magnitude. The zero result was a filter bug, not
+  empty levels.
+- The boot thread remains parked. Its engine still stops during asset lookup, and the reason is
+  not in the cache, the device registry, the string handling, the record scan, the startup order,
+  the synchronisation layer or the file-operation ordering - all of those were checked and
+  excluded by measurement. That investigation is documented with a current-state summary so it can
+  be resumed without re-walking the dead ends.
+- Next: render an assembled scene. The decoding problem is closed; what remains is drawing the
+  nodes.
+
+## 2026-10-29 - the cache was a red herring; the frontier is asset-lookup ordering
+
 ## 2026-10-29 - the cache was a red herring; the frontier is asset-lookup ordering
 
 - Spent the day following the empty cache index to its source and found that it is not a
@@ -253,11 +286,11 @@
 ## 2026-10-28 - three contributor issues, and a boot that keeps moving
 
 - undecuple read the new mutex code and filed three issues. Two were defects in what had just been written, one was a gap further out; all three are answered here.
-- **The syscall numbering was swapped** Ã¢â‚¬â€ 102 is `lock`, 103 is `trylock`, and the arm had them the other way round. A contended lock returned "busy" at once, so a caller that did not check the result entered its critical section without the mutex; a contended trylock blocked instead. The unit test repeated the same wrong number, which is exactly how such a thing survives review.
-- **A woken condition waiter could return without its mutex**: the hand-back function existed and had no callers. Signals now hand it over, or queue the waiter until it holds it. The four waits (`lwcond`, `lwmutex`, `mutex`, `cond`) also had **no timeouts at all** Ã¢â‚¬â€ the timeout argument was ignored and "timed out" was unreachable; all four now honour it.
+- **The syscall numbering was swapped** ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â 102 is `lock`, 103 is `trylock`, and the arm had them the other way round. A contended lock returned "busy" at once, so a caller that did not check the result entered its critical section without the mutex; a contended trylock blocked instead. The unit test repeated the same wrong number, which is exactly how such a thing survives review.
+- **A woken condition waiter could return without its mutex**: the hand-back function existed and had no callers. Signals now hand it over, or queue the waiter until it holds it. The four waits (`lwcond`, `lwmutex`, `mutex`, `cond`) also had **no timeouts at all** ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â the timeout argument was ignored and "timed out" was unreachable; all four now honour it.
 - The lightweight mutex layout was wrong in a way that only matters when the game reads the object itself: the recursive depth sat on the word that is the waiting-locker count on the console. It is at the console's offset now.
-- **Measured, one build and one run each: 9 Ã¢â€ â€™ 21 Ã¢â€ â€™ 31 cache opens, 4,609,672 Ã¢â€ â€™ 4,619,414 Ã¢â€ â€™ 4,636,309 blocks, and still no cache write.** Every sync correction moves the boot, and none of them reaches the write, so the remaining gap between a working mutex hand-off and a written cache is somewhere else.
-- On the SPURS issue: the import trace shows the LF queue **initialised and attached, and never pushed to** Ã¢â‚¬â€ no `PushBody`, no event-flag wait anywhere in the boot. So the initialiser writing nothing into the guest object is a real defect on the path, while the push cannot be exercised until the run gets further. Said so in the issue rather than closing it on code review.
+- **Measured, one build and one run each: 9 ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ 21 ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ 31 cache opens, 4,609,672 ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ 4,619,414 ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ 4,636,309 blocks, and still no cache write.** Every sync correction moves the boot, and none of them reaches the write, so the remaining gap between a working mutex hand-off and a written cache is somewhere else.
+- On the SPURS issue: the import trace shows the LF queue **initialised and attached, and never pushed to** ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â no `PushBody`, no event-flag wait anywhere in the boot. So the initialiser writing nothing into the guest object is a real defect on the path, while the push cannot be exercised until the run gets further. Said so in the issue rather than closing it on code review.
 - Tests: 208. Two issues closed with the commit, one kept open with the trace.
 - The port is not yet playable; it still stops in the engine's asset lookup.
 
@@ -265,17 +298,17 @@
 
 - The bdz/bdnz bug was found by accident, which suggested the same class of defect could be hiding elsewhere. So the interpreter was checked against the architecture, not against the game.
 - Three more silent disagreements, all fixed: **word shifts by 32 or more** returned the operand unchanged instead of zero (Rust re-masks shift counts, which hid the rule); **`rldicr` kept the low bits instead of the high ones**, and `rldic`/`rldimi` missed the low bits the instruction clears; and a **wrapped word mask** (`mb > me`) was computed as an intersection, so every wrapped bit-field extraction read as zero.
-- Each has a test now, and the boot is **byte-identical** afterwards Ã¢â‚¬â€ these paths are not exercised in this boot, so they are recorded as correctness with a null result rather than as progress.
+- Each has a test now, and the boot is **byte-identical** afterwards ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â these paths are not exercised in this boot, so they are recorded as correctness with a null result rather than as progress.
 - Worth saying what the audit has produced overall: four emulator bugs, one of which (the counter branches) was costing the engine its file-object slots. The emulator was a larger source of wrong behaviour than any of the console-contract differences chased earlier today.
 - Tests: 205 runtime, 31 harness.
 - The port is not yet playable; it still stops in the engine's asset lookup.
 
 ## 2026-10-28 - a bug in our own interpreter, found by watching a bitmap
 
-- The investigation had narrowed to a single thing: the engine gives up on a cache it opened successfully because it cannot obtain a **file-object slot** Ã¢â‚¬â€ the allocator returns zero on every call, so nothing records the descriptor and the poll repeats.
+- The investigation had narrowed to a single thing: the engine gives up on a cache it opened successfully because it cannot obtain a **file-object slot** ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â the allocator returns zero on every call, so nothing records the descriptor and the poll repeats.
 - That allocator is one of the blocks our **interpreter** covers rather than a lifted one, and the reason it failed was ours: the interpreter tested the counter-branch polarity backwards. `bdz` and `bdnz` were swapped, so every loop driven by the hardware counter that ran in the interpreter ran the wrong number of times. The allocator's 256-bit scan looked at one bit, declared the table full and returned zero, with a bitmap that was almost entirely clear.
 - Corrected, with three tests pinning the semantics: a counter loop with CTR = n runs its body n times, `bdz` branches only at zero, and a plain conditional branch leaves the counter alone.
-- **Measured: 61 cache opens became 9, and the run reaches the same asset abort 36,000 blocks earlier.** So this was real and its effect is larger than any of the console-contract fixes made today Ã¢â‚¬â€ and still not enough: the end state is unchanged, nine threads asleep with the two file-layer threads waiting on one condition.
+- **Measured: 61 cache opens became 9, and the run reaches the same asset abort 36,000 blocks earlier.** So this was real and its effect is larger than any of the console-contract fixes made today ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â and still not enough: the end state is unchanged, nine threads asleep with the two file-layer threads waiting on one condition.
 - Worth stating plainly: this bug was in *our* emulation, not in the game. It was found by watching a bitmap the guest was scanning, not by reading more of the guest.
 - Tests: 205 runtime, 24 harness. The harness suite is not part of the standard test run because linking it takes far longer than everything else; the command is recorded where the build is pinned.
 - The port is not yet playable; it still stops in the engine's asset lookup.
@@ -283,8 +316,8 @@
 ## 2026-10-28 - the boot ends as a deadlock, not a fault
 
 - The harness now prints every thread's state at the end of a run, and the picture is much clearer than "the engine aborts": at block 4,645,689 **nine threads are asleep and nothing can wake them**.
-- Two wait on event queues **with no deadline** (the schedulers), seven wait on condition variables Ã¢â‚¬â€ including both fios media threads, which wait on the *same* condition object. The main thread is the only one running, and it reaches the asset abort without ever reading the disc.
-- Neither of the two threads that finish exits early: they finish in the last 100,000 blocks. So the poll that gives up at block 155,821 is not ended by a worker dying Ã¢â‚¬â€ the media threads are alive and waiting.
+- Two wait on event queues **with no deadline** (the schedulers), seven wait on condition variables ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â including both fios media threads, which wait on the *same* condition object. The main thread is the only one running, and it reaches the asset abort without ever reading the disc.
+- Neither of the two threads that finish exits early: they finish in the last 100,000 blocks. So the poll that gives up at block 155,821 is not ended by a worker dying ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â the media threads are alive and waiting.
 - The condition the media threads wait on sits 0x20 bytes above the request object the poll was writing. Nothing in the whole trace signals that object after the poll ends; the signals that do happen are for its neighbour.
 - So the whole boot hinges on one missing completion: the media threads sleep, the schedulers wait for the events those media threads would have posted, and the main thread proceeds without asset I/O until it fails.
 - Tests: 205. The port is not yet playable.
@@ -292,7 +325,7 @@
 ## 2026-10-28 - the cache poll has an end, and nothing reads the disc after it
 
 - Put the 61 cache opens on the block timeline for the first time. They run from block **113,605** to **155,821** - roughly every 700 blocks - and then stop.
-- That kills the working assumption. The completion write happens at block **115,663** and the state word clears at 116,196, *inside* that window, so the poll outlives the completion it was supposed to be waiting for. It is a bounded wait that gives up after about 42,000 blocks (Ã¢â€°Ë†42 ms of the port's virtual clock), not a spin.
+- That kills the working assumption. The completion write happens at block **115,663** and the state word clears at 116,196, *inside* that window, so the poll outlives the completion it was supposed to be waiting for. It is a bounded wait that gives up after about 42,000 blocks (ÃƒÂ¢Ã¢â‚¬Â°Ã‹â€ 42 ms of the port's virtual clock), not a spin.
 - The more useful part is what comes after: from block 155,821 to the abort at 4.6 million, the file trace records **no file call at all**. The engine never opens `data_ps3.psarc` or any other asset file. So the asset failure is not caused by a file that could not be read - nothing is read.
 - The console, for comparison, does three things in order: writes the cache index (12.94 s), opens the 6.5 GB `data_ps3.psarc` immediately (12.95 s), and half a second later creates an **SPU thread group of five**. This port creates no SPU thread group at all - `sys_spu_initialize` runs once and nothing follows - which is the next concrete divergence once the engine gets that far, since the game's asset path decompresses on SPUs.
 - Two questions now, in order: why the engine gives up on a cache it successfully opened, and what it needs before it will read the disc at all.
@@ -311,7 +344,7 @@
 
 ## 2026-10-28 - the cache loop ignores the cache, and the instrument was lying
 
-- Planted the console's own cold-boot cache Ã¢â‚¬â€ the 1,043,456-byte index and its data file, byte-identical to what the console rebuilds Ã¢â‚¬â€ into the port's cache directory. Result: **nothing changed**. Same 61 create-only opens, no reads at all, no writes, identical block count, files untouched afterwards. The retry loop is not checking the cache; it never looks at it.
+- Planted the console's own cold-boot cache ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â the 1,043,456-byte index and its data file, byte-identical to what the console rebuilds ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â into the port's cache directory. Result: **nothing changed**. Same 61 create-only opens, no reads at all, no writes, identical block count, files untouched afterwards. The retry loop is not checking the cache; it never looks at it.
 - Decompiling the worker explains the shape: it is a **reopen service**. It walks a table of managed files and reopens any entry the engine has left closed, using flags recorded when the entry was registered. The 61 opens are 61 reopens of an entry that never stays open.
 - That moves the question to something much more specific: the handle is written into a **stack descriptor**, the table entry's handle is written once and never again, and the guest never calls close at all. So on this side the entry stays "closed" forever and the service loops; on the console the same loop exits on its first pass.
 - Two of our own instruments turned out to be weaker than assumed, and both are now fixed rather than trusted: the store watch silently stops after 64 records, and the file trace printed the open flags from a register **after** the call, which the guest may clobber. The build in flight captures arguments before the call and prints the descriptor pointer and the stored handle.
@@ -320,8 +353,8 @@
 
 ## 2026-10-28 - the cache worker, read at last, and two answers eliminated
 
-- The function behind the file-cache retry had never been decompiled Ã¢â‚¬â€ the analysis tool had only fragments of it, so every reading of its behaviour was inference. It is now a proper function in the analysis database: 9,608 bytes, identified by its own error strings ("Error re-opening file", "Error calling fstat in reopen of"). It opens the cache with a descriptor's flags field.
-- That killed both easy explanations in one pass. The code that decodes the request's mode byte and would produce **read-write|create** exists, is correct, and **never executes** on this path. And the descriptor the call receives does not hold the flags either Ã¢â‚¬â€ it reads 0 or 3 where the register carries `0x40`.
+- The function behind the file-cache retry had never been decompiled ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â the analysis tool had only fragments of it, so every reading of its behaviour was inference. It is now a proper function in the analysis database: 9,608 bytes, identified by its own error strings ("Error re-opening file", "Error calling fstat in reopen of"). It opens the cache with a descriptor's flags field.
+- That killed both easy explanations in one pass. The code that decodes the request's mode byte and would produce **read-write|create** exists, is correct, and **never executes** on this path. And the descriptor the call receives does not hold the flags either ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â it reads 0 or 3 where the register carries `0x40`.
 - So the value that keeps the cache read-only is assigned somewhere not yet instrumented. That is a smaller question than "why does the cache not initialise", and it is now the only question on this path.
 - Also established: the static table of file descriptors gets its path written three times during the boot, but its flags field is **never written at all**.
 - Method note: the destructive part (removing an overlapping function, creating the worker) ran on a **copy** of the analysis database. The live one keeps its function bodies, and the single body widened mid-pass was narrowed back to its analysed range.
@@ -331,9 +364,9 @@
 ## 2026-10-28 - a contributor's first day: three issues, two defects, one experiment
 
 - **undecuple** got access and opened three issues the same day. All three were checked against primary evidence rather than taken on trust, and all three are now closed with the evidence linked.
-- **Error codes (their first finding).** Three constants did not match the firmware's table: a timed-out wait reached the game as a *deadlock*, out-of-memory as an *abort*, and a bad file handle as *not permitted*. An audit of every kernel error literal in the runtime found a fourth they had not mentioned Ã¢â‚¬â€ a port-binding call answering "not connected" where the meaning is "already connected". A test now pins the whole table. Boot measurement: exactly unchanged, which is what an error-path fix should do.
-- **Deletion and file times (their third).** Their Killzone 3 experience was that deletes were no-ops on Windows and the game looped reopening a cache it could not remove. Here deletes really happen Ã¢â‚¬â€ but the test found something just as bad: after delete and recreate, the **change time did not move**, because Windows keeps the original creation time for a same-named file recreated within seconds. A file layer that validates its cache against that time would accept the file it just rejected. It now reports the later of creation and modification, so a rebuilt cache always looks newer.
-- **The same report exposed a habit.** Every host failure on the file calls came back as "not found" Ã¢â‚¬â€ no permission, is-a-directory, directory-not-empty, all reported as the same thing. They now say what happened, and a device path the port does not serve is refused instead of quietly resolving inside the game folder.
+- **Error codes (their first finding).** Three constants did not match the firmware's table: a timed-out wait reached the game as a *deadlock*, out-of-memory as an *abort*, and a bad file handle as *not permitted*. An audit of every kernel error literal in the runtime found a fourth they had not mentioned ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â a port-binding call answering "not connected" where the meaning is "already connected". A test now pins the whole table. Boot measurement: exactly unchanged, which is what an error-path fix should do.
+- **Deletion and file times (their third).** Their Killzone 3 experience was that deletes were no-ops on Windows and the game looped reopening a cache it could not remove. Here deletes really happen ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â but the test found something just as bad: after delete and recreate, the **change time did not move**, because Windows keeps the original creation time for a same-named file recreated within seconds. A file layer that validates its cache against that time would accept the file it just rejected. It now reports the later of creation and modification, so a rebuilt cache always looks newer.
+- **The same report exposed a habit.** Every host failure on the file calls came back as "not found" ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â no permission, is-a-directory, directory-not-empty, all reported as the same thing. They now say what happened, and a device path the port does not serve is refused instead of quietly resolving inside the game folder.
 - **Cold against warm (their second).** They pointed out that a cold and a warm boot are different experiments, and ours was warm. Reproduced: with no cache at all, the console creates both files read-write and writes **1,043,456 bytes** to the index in about six milliseconds, then goes to the disc. The file it builds is bit-identical to the cached one.
 - That narrows the real question to one bit of intent: the game under this runtime asks for **create-only**, where the console's game asks **read-write**, cold and warm alike. That is now issue #4 rather than a guess, with the static work on the flags builder as the next step.
 - Tooling: a cold-boot harness that restores the warm cache afterwards, a collaboration status command, an issue triage view, and an export that refuses to publish over a contributor's push. Every issue closed here says what was fixed and links the commit.
@@ -1409,7 +1442,7 @@
   modulo and saturating), the shift-left control vector, FPSCR read, and a word
   pack.
 - The full scan now decodes **47,823 of 47,929 functions** and the remaining
-  106 failures all classify as data Ã¢â‚¬â€ bytes outside the disassembler's defined
+  106 failures all classify as data ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â bytes outside the disassembler's defined
   instruction ranges. Real instruction gaps: **zero**.
 - To be precise about what that means: every word the analysis presents as a
   real instruction now decodes and emits a native block. It does not mean any
@@ -1562,7 +1595,7 @@
   indirect calls, and it is still not a reference-emulator comparison.
 - The port is not yet playable.
 
-## 2026-10-27 Ã¢â‚¬â€ end-to-end check turned into a property
+## 2026-10-27 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â end-to-end check turned into a property
 
 - The execution check no longer compares against one fixed record: it asserts
   that the recovered constructor echoes whatever type and flags it is given,
@@ -1573,7 +1606,7 @@
 - Still not a reference-emulator comparison.
 - The port is not yet playable.
 
-## 2026-10-27 Ã¢â‚¬â€ recovered function now runs to completion
+## 2026-10-27 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â recovered function now runs to completion
 
 - The end-to-end check now executes a recovered retail function through to its
   return, including one indirect callee imported as an extra root, and asserts
@@ -1588,7 +1621,7 @@
   runtime resolution rather than manual roots.
 - The port is not yet playable.
 
-## 2026-10-27 Ã¢â‚¬â€ first end-to-end execution check
+## 2026-10-27 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â first end-to-end execution check
 
 - A recovered retail function now runs through the native recompiled path in an
   automated harness: emit, compile, execute, and assert its observable output.
@@ -1600,7 +1633,7 @@
 - Not yet a comparison against the reference emulator; that is the next step.
 - The port is not yet playable.
 
-## 2026-10-27 Ã¢â‚¬â€ doubleword rotate and hinted branches
+## 2026-10-27 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â doubleword rotate and hinted branches
 
 - Added a doubleword rotate-mask primitive and accepted the hinted conditional
   branch forms, deriving the condition test from the branch's option field
@@ -1611,7 +1644,7 @@
   Remaining real gaps: 912; the other 369 "gaps" are embedded data.
 - The port is not yet playable.
 
-## 2026-10-27 Ã¢â‚¬â€ decode audit and integer arithmetic
+## 2026-10-27 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â decode audit and integer arithmetic
 
 - Coverage accounting now separates real code from embedded data using the
   analyser's own instruction map; a sixth of the previous "gaps" were data.
@@ -1623,7 +1656,7 @@
   Real remaining gaps: 1,026 (the rest are data).
 - The port is not yet playable.
 
-## 2026-10-27 Ã¢â‚¬â€ system-call boundary
+## 2026-10-27 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â system-call boundary
 
 - Added a system-call boundary with a small, explicitly limited set of
   behaviours: mutex create/destroy/lock/unlock and elided sleeps. Anything
@@ -1635,7 +1668,7 @@
   Decode coverage is not capability: unimplemented calls fail at runtime.
 - The port is not yet playable.
 
-## 2026-10-27 Ã¢â‚¬â€ reservation-based atomic pair
+## 2026-10-27 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â reservation-based atomic pair
 
 - Added the load-reserve / store-conditional pair with a single-threaded
   reservation model and condition-register success reporting.
@@ -1644,7 +1677,7 @@
 - Coverage: 45,899 of 47,929 functions (95.8%); 336,396 native blocks
 - The port is not yet playable.
 
-## 2026-10-27 Ã¢â‚¬â€ deterministic timebase
+## 2026-10-27 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â deterministic timebase
 
 - Added the timebase read (both encodings) backed by a deterministic counter
   advanced once per dispatched native block, so runs stay reproducible.
@@ -1653,7 +1686,7 @@
 - Coverage: 45,827 of 47,929 functions (95.6%); 334,786 native blocks
 - The port is not yet playable.
 
-## 2026-10-27 Ã¢â‚¬â€ subtract-from-immediate and shift fix
+## 2026-10-27 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â subtract-from-immediate and shift fix
 
 - Added a subtract-from-immediate primitive with carry recording, and fixed
   one shift form that previously ignored its recording bit.
@@ -1662,7 +1695,7 @@
 - Coverage: 45,685 of 47,929 functions (95.3%); 332,387 native blocks
 - The port is not yet playable.
 
-## 2026-10-27 Ã¢â‚¬â€ word shift primitives
+## 2026-10-27 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â word shift primitives
 
 - Added three 32-bit word shift primitives with masked shift counts,
   zero/sign extension and condition-register updates, unit-tested at the
@@ -1672,7 +1705,7 @@
 - Coverage: 45,566 of 47,929 functions (95.1%); 329,859 native blocks
 - The port is not yet playable.
 
-## 2026-10-27 Ã¢â‚¬â€ coverage rebased, reciprocal square root added
+## 2026-10-27 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â coverage rebased, reciprocal square root added
 
 - Coverage measurement was corrected to cover the full analysed function
   inventory instead of a long-standing subset. Reported coverage therefore
@@ -1684,7 +1717,7 @@
 - Coverage: 45,435 of 47,929 functions (94.8%); 327,315 native blocks
 - The port is not yet playable. Decode coverage is not behavioural correctness.
 
-## 2026-10-27 Ã¢â‚¬â€ indexed float access and single-precision square root
+## 2026-10-27 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â indexed float access and single-precision square root
 
 - Added the indexed floating-point load/store family and a single-precision
   square root primitive; a prior label in the audit was corrected against the
@@ -1694,7 +1727,7 @@
 - Coverage: 12,963 of 14,732 functions; 148,296 native blocks
 - The port is not yet playable.
 
-## 2026-10-27 Ã¢â‚¬â€ bounded function-body manifests and vector subtract
+## 2026-10-27 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â bounded function-body manifests and vector subtract
 
 - Coverage measurement is now bounded to analysed function bodies, so embedded
   data is no longer misread as code. This corrected the baseline: 208 reported
@@ -1706,7 +1739,7 @@
 - Coverage: 12,637 of 14,732 functions; 140,242 native blocks
 - The port is not yet playable.
 
-## 2026-10-27 Ã¢â‚¬â€ vector floating-point compares
+## 2026-10-27 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â vector floating-point compares
 
 - Added the three vector floating-point compare primitives, including their
   recording forms, with the architecture-defined condition-register summary
@@ -1716,7 +1749,7 @@
 - Coverage: 12,407 of 14,732 functions; 141,034 native blocks
 - The port is not yet playable.
 
-## 2026-10-27 Ã¢â‚¬â€ vector single-precision add
+## 2026-10-27 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â vector single-precision add
 
 - Added a vector single-precision add primitive with round-to-nearest
   semantics, including signed-zero and overflow coverage in tests.
@@ -1725,7 +1758,7 @@
 - Coverage: 12,384 of 14,732 functions; 140,349 native blocks
 - The port is not yet playable.
 
-## 2026-10-27 Ã¢â‚¬â€ vector integer and fused arithmetic primitives
+## 2026-10-27 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â vector integer and fused arithmetic primitives
 
 - Added three more vector primitives: unsigned word add and subtract (modulo
   32-bit lanes, no flag changes) and a fused negative multiply-subtract with
@@ -1735,7 +1768,7 @@
 - Coverage: 12,325 of 14,732 functions; 139,990 native blocks
 - The port is not yet playable.
 
-## 2026-10-27 Ã¢â‚¬â€ vector conversion primitives
+## 2026-10-27 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â vector conversion primitives
 
 - Added two vector floating-point to fixed-point conversion primitives, both
   with round-toward-zero and saturation, checked against the architecture
