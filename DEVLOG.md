@@ -1,5 +1,27 @@
 # Development log
 
+## 2026-10-29 - the reopen loop was a symptom: the cache directory is never created
+
+- The system-cache mount used to create the file layer's working directory in advance. That one
+  line was steering the engine: with the directory present it registered a cache entry and its
+  reopen service opened the index 62,405 times, every open create-only, and never wrote a byte.
+- With the directory absent - which is what a console cold boot sees - the engine's check answers
+  "no such file", and the port now takes the same branch the console takes. Measured: six checks
+  from the media threads, **no opens, no writes**, and the boot runs to the engine's own asset
+  abort instead of spinning in a reopen loop.
+- The missing call is the directory creation the console performs between those two states, from
+  the same media thread, before it opens the index read-write. The engine has that code path and
+  does not reach it here; two probes on it record zero hits. So the last few days' loop was not a
+  deadlock in the file layer - it was a branch the port made unreachable.
+- Why this is progress rather than a regression: the previous state produced 62,405 opens and no
+  writes because the engine was on a path the console never takes. The port now follows the
+  console's sequence up to the missing call, which is a smaller and better-defined gap.
+- Also fixed and measured in this build: a sleeping thread is runnable as soon as its deadline
+  passes (one had been asleep 224,000 blocks past it), and the file layer's own condition wait is
+  no longer refused with a permission error it never returns on the console.
+- Tests: 213. Still not playable; the acceptance test is unchanged - a write in the trace and the
+  cache index larger than zero.
+
 ## 2026-10-29 - the loop had a cause: a condition wait that always failed
 
 - Preemption from the previous entry was implemented and immediately broke the boot in a way that
