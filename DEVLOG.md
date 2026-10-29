@@ -1,5 +1,22 @@
 # Development log
 
+## 2026-10-29 - the cache write routing is correct, but the index is still empty
+
+- The previous entry fixed where the cache writes go; this entry reports what they contain. The
+  index file is 1,043,456 bytes with only 19 non-zero bytes (the `fioscach` header): the whole
+  1 MB index body is zeros.
+- Instrumented the write path to print the buffer and size the engine hands the file layer. The
+  two header writes carry a stack buffer holding `fioscach`; the sixteen body writes all carry
+  the same heap staging buffer and the first words are zero on every one.
+- A store watch over that buffer shows only the zeroing memset ever touches it. The engine
+  allocates and clears the staging buffer and writes it out, but the step that would fill it
+  with file entries never runs. So the index is an empty table.
+- That is why the boot then stops at the engine's "could not locate application specific
+  assets called 'Application'": the lookup resolves the name through a `cache:lumps/<name>.core`
+  path, and an empty index returns nothing. The engine then hits its own deliberate trap.
+- Next: find what populates the cache index (or why the file list it copies from is empty) so
+  the index has entries and the asset lookup can succeed.
+
 ## 2026-10-29 - the cache bootstrap completes: the index is written correctly
 
 - The cache build was blocked by a second interpreter/recompiler bug: the doubleword

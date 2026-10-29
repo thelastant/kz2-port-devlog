@@ -19,8 +19,8 @@ level load, gameplay, saves and settings.
 
 | | |
 | --- | --- |
-| Boot | graphics, file system, fonts and the disk cache initialised |
-| Executed blocks | **4.7M** to the asset-lookup fault (the cache bootstrap now completes) |
+| Boot | graphics, file system, fonts and the cache file layer initialised (the cache index body is still empty) |
+| Executed blocks | **4.7M** to the asset-lookup fault (the cache bootstrap now runs end to end) |
 | Submissions | 8 command submissions, 32,768 words, 6 completed flips |
 | Static translation | **49,070 functions**, **428,755 basic blocks** (whole-closure decoder lift) |
 | Runtime tests | **214** passing, plus recompiler and harness suites |
@@ -28,7 +28,7 @@ level load, gameplay, saves and settings.
 
 ## Progress
 
-**140 done · 51 open.** ✅ done and verified · ⬜ outstanding ·
+**143 done · 52 open.** ✅ done and verified · ⬜ outstanding ·
 `(in progress)` being worked now · `(parked)` tried and reverted, kept on a branch.
 
 <details>
@@ -120,7 +120,7 @@ level load, gameplay, saves and settings.
 </details>
 
 <details>
-<summary><b>5. File system</b> — 15 done · 3 open</summary>
+<summary><b>5. File system</b> — 15 done · 4 open</summary>
 
 - ✅ `cellFs*` and `sys_fs_*` share one implementation, so both entry points have the same semantics
 - ✅ Open, close, read, write, lseek
@@ -137,22 +137,24 @@ level load, gameplay, saves and settings.
 - ✅ Fixed: descriptors numbered from the console's first non-stream handle; the engine reads a zero descriptor as "no file"
 - ✅ Regression test: every access mode and the create flag
 - ✅ Regression test: descriptors start after the standard streams
-- ✅ Fixed: the doubleword compare (`cmpdi`/`cmpldi`) was decoded as the word form, so the file layer's free-list bitmap bit test always read a set bit in the upper 32 bits as clear - the same cache-file entry was handed out twice and the index was written to the data file. With it fixed, the cache initialisation completes with the console's exact write split (17 writes to the 1 MB index, one 512-byte header to the data file)
+- ✅ Fixed: the doubleword compare (`cmpdi`/`cmpldi`) was decoded as the word form, so the file layer's free-list bitmap bit test always read a set bit in the upper 32 bits as clear - the same cache-file entry was handed out twice and the index was written to the data file. With it fixed, the cache initialisation routes the writes with the console's exact split (17 writes to the 1 MB index, one 512-byte header to the data file)
+- ❌ (in progress) The cache index body is empty: the engine writes a 1 MB zeroed staging buffer instead of file entries, so the index is an empty table. This is the current file-layer blocker.
 - ⬜ `sys_fs_fcntl` device-query path exercised the way the console exercises it
 - ⬜ Blu-ray specific surface beyond plain files
 
 </details>
 
 <details>
-<summary><b>6. Assets and data formats</b> — 6 done · 3 open</summary>
+<summary><b>6. Assets and data formats</b> — 7 done · 3 open</summary>
 
-- ✅ PSARC archive reader
+- ✅ PSARC archive reader (retail `data_ps3.psarc` opens: 3 layers, 3,951 hashed entries)
 - ✅ Serialised object reader
 - ✅ Texture reader
 - ✅ Mesh reader
 - ✅ Skeleton reader
 - ✅ Skinning reader
-- ⬜ (in progress) Asset registry / lump resolution through the engine's own cache - current blocker
+- ✅ The engine's asset lookup located: a name is resolved to a `cache:lumps/<name>.core` path through the FIOS cache; the "Application" root asset is what the boot asks for first
+- ❌ (in progress) Asset registry / lump resolution through the engine's own cache - blocked by the empty cache index body; the lookup returns nothing and the engine fatals by design
 - ⬜ Streaming packages and level packages
 - ⬜ Animation clip and state-machine data
 
@@ -239,7 +241,7 @@ level load, gameplay, saves and settings.
 <details>
 <summary><b>13. Menus, level load and gameplay</b> — 0 done · 9 open</summary>
 
-- ⬜ Asset lookup completing (current blocker)
+- ❌ (in progress) Asset lookup completing - the engine asks for the "Application" root asset; it resolves through the cache index, which is currently empty (current blocker)
 - ⬜ Front-end and menu flow
 - ⬜ Level loading and streaming
 - ⬜ Scripting runtime
@@ -252,7 +254,7 @@ level load, gameplay, saves and settings.
 </details>
 
 <details>
-<summary><b>14. Validation, oracle work and tooling</b> — 36 done · 6 open</summary>
+<summary><b>14. Validation, oracle work and tooling</b> — 38 done · 6 open</summary>
 
 - ✅ Oracle: retail disc booted headless in RPCS3 with tracing enabled
 - ✅ Syscall inventory captured from the oracle (43 lv2 calls, 28 HLE calls)
@@ -291,6 +293,8 @@ level load, gameplay, saves and settings.
 - ✅ Interpreter counter branches (`bdz`/`bdnz`) corrected — they were swapped, which cost the engine its file-object slots; 61 cache opens became 9
 - ✅ lv2 mutex numbering corrected (102 = lock, 103 = trylock), condition hand-back wired, timeouts honoured on all four sync waits, console lwmutex layout — measured: 9 → 21 → 31 cache opens
 - ✅ The fd swap (the index written to the data file) was a second decode bug: `cmpdi`/`cmpldi` decoded as the word form, so the free-list bitmap bit test in the upper 32 bits always read clear and the same entry was handed out twice. With it fixed the write split matches the console byte-for-byte (17 writes to the index, one header to the data file)
+- ✅ Measured: the cache index body is all zeros. The engine writes a 1 MB zeroed staging buffer; the file-entry fill never populates it. A store watch over the buffer shows only the zeroing memset, and the port's cache hash differs from the console's while the size matches
+- ✅ Located the engine's asset lookup: `FUN_00078598` requests "Application" through `FUN_00421cd8`, which builds a `cache:lumps/<name>.core` path and loads it; an empty index makes that return nothing and the engine traps with `0xdeadca7`
 - ⬜ Explain why the module-load set differs between the two boots
 - ✅ Trace gates for file calls, syscalls, imports, memory and synchronisation
 - ⬜ Console-side visibility into engine-internal structures (needed to settle the current ordering question)
@@ -314,9 +318,9 @@ level load, gameplay, saves and settings.
 
 ## Current blocker, in full
 
-**Updated 2026-10-29: the cache bootstrap now completes, and the boot advances to the asset
-lookup.** The file-cache initialisation — which had stalled the boot for weeks — is fixed.
-Two decode bugs were the cause, and both are now pinned by regression tests:
+**Updated 2026-10-29: the write routing is fixed, but the cache body is still empty.** Two
+decode bugs stalled the file-cache bootstrap for weeks, and both are now closed and pinned by
+regression tests:
 
 - `cmpwi`/`cmplwi` treated `r0` as literal zero (the `cmp` forms have no such rule), so the
   read-write access bits were dropped and the cache index was opened create-only;
@@ -325,15 +329,18 @@ Two decode bugs were the cause, and both are now pinned by regression tests:
   the same entry was handed out for both cache files, and every index write went to the data
   file.
 
-With both fixed, the port builds the cache exactly like the console on a cold boot: 17 writes
-to the index (1,043,456 bytes, fd 3) and one 512-byte header to the data file (fd 4). The
-acceptance bar — a write in the trace and a cache index above zero — is met.
+With both fixed, the port routes the writes exactly like the console on a cold boot: 17 writes
+to the index (1,043,456 bytes, fd 3) and one 512-byte header to the data file (fd 4).
 
-The boot then advances past the cache and stops at the next step: the engine's own
-"could not locate application specific assets" report, which is the asset/package lookup that
-runs after cache initialisation. That lookup is the current frontier; the asset registry is
-still empty on a fresh port boot because the packages have not yet been resolved through the
-cache the way the console resolves them.
+**The content is still wrong.** The index file is 1,043,456 bytes but only 19 bytes are
+non-zero — the `fioscach` header. The entire 1 MB index body is zeros. The engine allocates and
+zeroes a staging buffer and writes it out, but the step that would fill it with file entries
+never populates it. So the cache index is an empty table.
+
+The boot therefore advances past the cache and stops at the next step: the engine's own "could
+not locate application specific assets" report. That lookup resolves an asset named
+"Application" through a `cache:lumps/<name>.core` path; with an empty index the lookup returns
+nothing and the engine fatals by design. Fixing the empty index body is the current frontier.
 
 The two earlier divergences are now explained and closed: the create-only open was the `cmpwi`
 bug (issue #4), and the "retry loop" was the reopen service walking a table whose entries were
