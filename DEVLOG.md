@@ -7,14 +7,14 @@
   successful, none read-write - there is not a single write, read, or close. The handle number
   climbs monotonically from 3 to past 61,000, so the engine opens the same file and never
   releases it.
-- The loop is not a busy retry: after a successful open and a successful stat of the file, the
-  engine waits on a condition variable that is never signalled, so the higher-level code
-  re-submits the open. Two of the engine's worker threads are blocked on that same condition
-  and two more on event queues, which is why the port reaches its step limit with the cache
-  index still empty.
-- This is consistent with, and sharpens, the earlier "request wait reports in-progress"
-  finding: the wait is now named as a specific condition in the engine's file layer, not an
-  unlocalised state-word hang.
+- The loop is not a busy retry: every open and every stat succeeds. The two worker threads
+  run a healthy work-queue cycle - they wait for work, process an open, and wait again - until
+  the main thread stops handing them work and moves onto a cache-hash loop, leaving the
+  workers idle on the work-queue condition and two more threads idle on event queues. That is
+  why the port reaches its step limit with the cache index still empty.
+- This sharpens the earlier "request wait reports in-progress" finding: the workers are
+  genuinely waiting on their work queue, and the open question is whether the main thread's
+  hash loop is finite-but-slow or stuck.
 - Also recorded this session: the engine's SPU architecture, from a public GDC 2009 talk, as
   the target shape for the port's scheduler and graphics - six SPUs, roughly 44 job types and
   a thousand jobs a frame, a deferred renderer with a quarter-resolution SPU post-processing
