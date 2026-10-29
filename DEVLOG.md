@@ -1,5 +1,20 @@
 # Development log
 
+## 2026-10-29 - the create-only open is fixed; the engine now writes its cache
+
+- The cache index was opened create-only (0x40) here but read-write (0x42) on the console. The
+  cause was not the engine's request - the mode byte was always read-write - but a bug in the
+  port's interpreter: its word-compare treated register 0 as a literal zero, which the compare
+  instructions do not, so the equality test that selects read-write never passed and the
+  read-write bit was dropped. The recompiler did not share the bug, so only interpreted code
+  was affected.
+- With the interpreter fixed, the port opens both cache files read-write, writes eighteen
+  times, and produces a 1,043,456-byte cache file - the console's own index size. A regression
+  test pins the instruction.
+- This is the acceptance milestone: a write in the trace and a cache above zero. The boot still
+  stops before the front-end, but the file-cache bootstrap that had been blocking everything
+  now completes its writes.
+
 ## 2026-10-29 - the cache loop is now counted exactly, and the stall has a concrete shape
 
 - A full trace with the file layer's report enabled settles the earlier uncertainty over the
