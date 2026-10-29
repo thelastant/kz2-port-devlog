@@ -1,5 +1,35 @@
 # Development log
 
+## 2026-10-29 - the cache directory is created, and the missing write has a name
+
+- The engine's start-up for its disk cache is a short chain: check the working directory,
+  create it if it is missing, then open the two cache files. The port now runs that chain
+  itself - the engine issues its own "create directory" request, the directory appears, and the
+  cache file is opened and registered in the engine's own table, at the same relative path the
+  console uses.
+- Getting there needed one behavioural decision, kept behind a switch while it is verified:
+  when the engine asks whether a missing path exists, it expects the answer that means "not
+  found" rather than a hard error, because that is the branch that creates the directory. With
+  that switch on, the request types the engine dispatches went from one to four - including the
+  directory-creation request it had never sent before.
+- The cache file is still never written, and the reason is now specific rather than mysterious.
+  The engine registers its record for the cache file with **no access mode**, opens it
+  create-only, and then reopens it forever: the access mode never reaches the platform, so no
+  write can happen.
+- The read-write open is not mis-encoded: it is **abandoned**. A per-request flag tested by the
+  engine's dispatcher drops roughly half of the open requests before they are executed, and the
+  ones dropped are exactly the read-write ones. The create-only opens that survive are the
+  retry loop's.
+- A first attempt to fix access handling in the file layer was reverted after a test showed the
+  premise was wrong: the engine converts its file-layer mode into access flags itself, so the
+  platform never sees the ambiguous value. It is recorded as a rejected change rather than kept
+  as speculative code.
+- Measurement added for the next step: the dispatcher now reports which thread abandons a
+  request and the whole field the abandon test reads, which distinguishes "a flag somebody
+  sets" from "a field I have misread". No behaviour change is in that build.
+- Tests: 214. The level viewer still runs on retail data; the game itself is still not playable,
+  and the acceptance test is unchanged - a write in the trace and the cache index above zero.
+
 ## 2026-10-29 - the missing directory is now named down to one error code
 
 - The engine's cache start-up is a short chain: initialise, create the directories the file

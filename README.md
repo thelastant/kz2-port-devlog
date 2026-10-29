@@ -23,7 +23,7 @@ level load, gameplay, saves and settings.
 | Executed blocks | **60,000,000** (latest build reaches the harness step limit; no fault) |
 | Submissions | 8 command submissions, 32,768 words, 6 completed flips |
 | Static translation | **49,070 functions**, **428,755 basic blocks** |
-| Runtime tests | **213** passing, plus recompiler and harness suites |
+| Runtime tests | **214** passing, plus recompiler and harness suites |
 | Playable? | **No** — the boot stops in the engine's own asset lookup |
 
 ## Progress
@@ -314,19 +314,21 @@ level load, gameplay, saves and settings.
 
 ## Current blocker, in full
 
-**Updated 2026-10-29: the reopen loop has a cause.** Preemption is in, and it exposed the
-real defect: every lightweight condition wait from the file layer's media threads was
-refused with a permission error the system never returns. The console trace shows 254 of
-those waits in a cold boot and not one error. Removing the invented check, waking sleepers
-at their deadline, and letting the engine create its own working directory moved the
-boot off its null fault and onto a plain reopen loop: 62,405 opens of the cache index, all
-with create-only access, still zero writes.
+**Updated 2026-10-29: the cache directory is created, and the missing write has a name.** The
+engine's file layer refused every lightweight condition wait with a permission error the
+system never returns (the console trace shows 254 of those waits and not one error); with that
+removed, sleepers woken at their deadline, and a missing path answered the way the engine's
+own directory walk expects, the port now runs the start-up chain itself: it issues the
+directory-creation request, the directory appears, and the cache file is opened and registered
+in the engine's table at the console's own relative path. The request types the engine
+dispatches went from one to four.
 
-The console's own file records, read out of the emulated machine, say what the port gets
-wrong: they carry **read-write** access and stay open. A create-only descriptor is what the
-engine's reopen service rejects. Getting the access mode right is the next step; the
-acceptance test is unchanged - a write in the trace and the cache index growing past
-zero.
+The cache is still never written, and the reason is now specific: the engine registers its
+record with **no access mode**, opens create-only, and reopens forever. The read-write open is
+not mis-encoded - it is **abandoned** by a per-request flag the dispatcher tests before
+executing it, and the abandoned ones are exactly the read-write opens. The retry loop's
+create-only opens are what survive. Measurement is in place to name the source of that flag;
+the acceptance test is unchanged - a write in the trace and the cache index above zero.
 
 
 The engine initialises a disk cache through its own I/O layer before it can resolve
