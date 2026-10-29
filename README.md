@@ -23,7 +23,7 @@ level load, gameplay, saves and settings.
 | Executed blocks | **4,644,637** (latest validated build) |
 | Submissions | 8 command submissions, 32,768 words, 6 completed flips |
 | Static translation | **49,070 functions**, **428,755 basic blocks** |
-| Runtime tests | **196** passing, plus recompiler and harness suites |
+| Runtime tests | **213** passing, plus recompiler and harness suites |
 | Playable? | **No** — the boot stops in the engine's own asset lookup |
 
 ## Progress

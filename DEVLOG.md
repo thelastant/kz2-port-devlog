@@ -1,5 +1,34 @@
 # Development log
 
+## 2026-10-29 - the loop had a cause: a condition wait that always failed
+
+- Preemption from the previous entry was implemented and immediately broke the boot in a way that
+  was my bug, not the game's: the scheduler switched threads but forgot to hand the resume address
+  back to the boot loop, so two threads ran each other's code and the program counter ended at
+  zero. Fixed and pinned with a test.
+- With that correct, the boot went further than ever - and then stopped on a null condition handle.
+  Tracing the wait that produced it showed the real problem: **every condition wait from the file
+  layer's media threads was being refused**. The port required the caller to own the paired
+  lightweight mutex; the system's actual call has no such requirement, it releases the mutex if
+  held and sleeps either way. The console trace confirms it: 254 condition waits during a cold
+  boot, zero errors. The invented check is gone.
+- Two more defects were visible in the same dump. A sleeping thread whose deadline was 224,000
+  blocks in the past was still asleep, because sleepers only woke once every other thread blocked;
+  the scheduler now makes an expired deadline runnable first. And the system-cache mount was
+  creating the file layer's own working directory in advance, which removed the engine's
+  "directory missing, create it" branch entirely.
+- Measured, one run: the null fault is gone, the boot no longer stops early (it reached the
+  harness's 60,000,000-block step limit), and the cache descriptor is reopened **62,405** times
+  where the previous build managed 169. That is not progress toward the goal by itself - writes
+  are still zero - but the loop is now understood and driven by a real state machine rather than a
+  refusal.
+- Console evidence gathered for the next step: read live out of the emulated machine, the engine
+  keeps one fixed-size record per managed file, holding its own file descriptor, the access mode
+  and the path. On the console the cache records carry **read-write** access and stay open. In the
+  port they carry create-only, which is exactly why the reopen service keeps rejecting them.
+- Tests: 213. The port is still not playable; the acceptance test is unchanged - a file write in
+  the trace and the cache index growing past zero.
+
 ## 2026-10-28 - the game played to the first level, and what a level load costs
 
 - The retail disc was driven from the language screen through the main menu and difficulty into **Corinth River**, the first campaign level, with the virtual pad. That needed two things that were not obvious: RPCS3's keyboard pad handler has to be selected in its configuration, and key presses must go through Win32 events - the usual automation route only reaches the game list, never the render surface.
