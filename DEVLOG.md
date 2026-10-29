@@ -1,5 +1,23 @@
 # Development log
 
+## 2026-10-29 - the missing directory is now named down to one error code
+
+- The engine's cache start-up is a short chain: initialise, create the directories the file
+  layer needs, then open the two cache files. Probes show the first two steps run in this port
+  and the third is never reached.
+- The reason is now specific. The directory walk asks the file layer about each path fragment.
+  On the console a missing fragment answers "not found", the walk creates it, and start-up
+  continues. In this port that same query comes back with an **internal rejection code from the
+  engine's own request layer**, not a file-system answer, and the walk treats any error as fatal
+  and gives up before creating anything.
+- So the create-the-directory call is never even submitted, which matches the earlier finding
+  that this boot only ever submits one kind of file request out of the seventeen the worker
+  knows how to dispatch.
+- Also identified: the engine's file worker dispatches on a numeric request type, and the type
+  that creates a directory is a specific one that this boot never sends.
+- No new build was needed for any of this - it is probe and table work on the existing binary.
+- Tests: 214. The level viewer is unaffected and still runs on the retail archive.
+
 ## 2026-10-29 - the reopen loop was a symptom: the cache directory is never created
 
 - The system-cache mount used to create the file layer's working directory in advance. That one
