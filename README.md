@@ -294,7 +294,7 @@ level load, gameplay, saves and settings.
 - ✅ lv2 mutex numbering corrected (102 = lock, 103 = trylock), condition hand-back wired, timeouts honoured on all four sync waits, console lwmutex layout — measured: 9 → 21 → 31 cache opens
 - ✅ The fd swap (the index written to the data file) was a second decode bug: `cmpdi`/`cmpldi` decoded as the word form, so the free-list bitmap bit test in the upper 32 bits always read clear and the same entry was handed out twice. With it fixed the write split matches the console byte-for-byte (17 writes to the index, one header to the data file)
 - ✅ Measured: the cache index body is all zeros. The engine writes a 1 MB zeroed staging buffer; the file-entry fill never populates it. A store watch over the buffer shows only the zeroing memset, and the port's cache hash differs from the console's while the size matches
-- ✅ Located the engine's asset lookup: `FUN_00078598` requests "Application" through `FUN_00421cd8`, which builds a `cache:lumps/<name>.core` path and loads it; an empty index makes that return nothing and the engine traps with `0xdeadca7`
+- ✅ Located the engine's asset lookup: the boot asks for a root asset named "Application", which resolves through a `cache:lumps/<name>.core` path; an empty index returns nothing and the engine then takes its own deliberate fatal path
 - ⬜ Explain why the module-load set differs between the two boots
 - ✅ Trace gates for file calls, syscalls, imports, memory and synchronisation
 - ⬜ Console-side visibility into engine-internal structures (needed to settle the current ordering question)
