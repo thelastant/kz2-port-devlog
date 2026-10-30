@@ -1804,3 +1804,20 @@ private workspace.
 - With both fixed, 87 unit tests pass and the software renderer shows recognisable level structure.
 - Still to do: about 1,200 meshes are skipped on a plausibility check, and some surfaces present as
   spikes. Both look like per-part details rather than placement, which is now measured and working.
+
+## 2026-10-30 - placement solved: the geometry was already in the right place
+
+- Levels now render as coherent scenes: buildings with facades, a cylindrical structure with spiral
+  detail, clean slabs and beams. Corinth River draws 533,472 triangles across 2,831 meshes inside a
+  tightly level-scale volume.
+- The fix was to remove code, not add it. Every mesh was being shifted by a value read from its own
+  data, and that value was never a position.
+- Each section builds one shared vertex buffer that already sits in level space, and each mesh selects
+  its own slice of it. Adding a per-mesh offset displaced everything that had been correctly placed.
+- Four conventions were tried before the answer: a direct offset, a relaxed validity check, an axis
+  permutation, and finally no offset at all. Only the last one produced a scene.
+- Worth recording honestly: two of the earlier attempts reported more meshes "placed" than the working
+  version. Those counts measured how many meshes passed a check, not how many rendered correctly. A
+  higher number was hiding a worse picture.
+- The remaining work is small in scope: around 90 meshes still lack a usable record, and a few
+  surfaces present as spikes.
