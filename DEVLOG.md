@@ -1,5 +1,25 @@
 # Development log
 
+## 2026-10-30 - the texture payload layout, measured against every texture on disc
+
+- I stopped guessing and measured. For every texture in a level, the header's size word rounded up
+  to a 128-byte block equals the bytes that follow the header. All 3,028 of them, across all 38
+  files of the level, with no exceptions and no off-by-one.
+- That pins the layout: width, height, format and mip count are stored scaled by 256, the pixel
+  data begins 43 bytes into the payload, a `01 05 00 00 00` trailer marks the header's end, and the
+  bytes after it are a plain block stream.
+- **The stored data is one level, not a mip chain.** A small texture decodes to a single colour
+  from one block onward, with the block bytes repeated as fill - and the same bytes appear where
+  the format requires endpoint colours.
+- **So the renderer's banding was never a sampling bug.** It reads the data region as a mip chain
+  and starts a few bytes into the wrong place, which shifts every texture by one block row. The
+  magenta panels are a colour seen through that shift.
+- I retracted three claims along the way: that the magenta was emissive, that the decoder had
+  passed a clean check, and that the level-wide size sweep showed no mismatches. Each was a
+  measurement of the wrong thing - a decoder compared against its own assumption.
+- The next step is to re-point the texture fetch at the real data start and re-measure, which is
+  the first time that measurement will mean something.
+
 ## 2026-10-30 - the magenta panels are a texture header misread
 
 - Tracing the bright magenta panels that appear on two levels found something larger than a
