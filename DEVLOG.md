@@ -1,5 +1,25 @@
 # Development log
 
+## 2026-10-30 - the magenta panels are a texture header misread
+
+- Tracing the bright magenta panels that appear on two levels found something larger than a
+  material bug. The same two textures appear on both levels with zero green, which no real
+  material produces, so I followed them back to their payload.
+- The texture header layout the decoder assumes does not match what the disc stores. Measured
+  across all 3,028 textures in one level: none of them parse, and payloads that should hold
+  several kilobytes of pixels are being read well past where their data begins.
+- The frames that looked correct were the minority of textures that happened to land on plausible
+  bytes. The scene-level renders were right about geometry and placement and wrong about pixels.
+- **Retracted**: that the magenta was an emissive material. It is not.
+- **Retracted**: that the texture decoder had passed a 135/135 check. That check compared the
+  decoder against its own header reading, so a uniformly wrong layout passed cleanly.
+- I am not replacing the layout with another guess. The next step is to decode the header from the
+  fields the payloads actually repeat, and to stop treating decoded pixels as evidence until the
+  layout is settled.
+- Separately, framing is fixed. Cameras are now placed at the densest cluster of textured rather
+  than at the level's outer bounds, so Salamun Bridge renders from inside the bridge instead of
+  from outside a kilometre-wide enclosure.
+
 ## 2026-10-30 - the map pipeline is decoded end to end; placement was the last missing piece
 
 - The asset side of the map work is finished. Every single-player level now loads, and levels can
