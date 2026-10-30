@@ -1,5 +1,21 @@
 # Development log
 
+## 2026-10-30 - correction: the texture layout is not solved
+
+- Last entry said the texture layout was solved and only block shading remained. **That was wrong.**
+  I read one decode as showing correct geometry. It was noise, and I talked myself into seeing
+  structure in it.
+- Going back to the bytes: the region I decoded as blocks is mostly a repeating `50` fill run.
+  Every data start I have tried lands in fill, not pixel data. So the start offset is still unknown.
+- This is the fourth claim about this pipeline that has not survived checking, and the pattern is
+  the same each time: a measurement that looks right, described as settled before another
+  measurement contradicted it.
+- The parts that do hold: the header is read correctly for all 3,028 textures in a level - width,
+  height and format, across both header shapes - and that is checked by a test that passes.
+- The honest position: header solved, pixel data not. The next step is not another offset guess. It
+  is reading a savestate taken inside a level, or reading the engine's texture loader in the Ghidra
+  project, so the answer comes from the machine rather than from my inference.
+
 ## 2026-10-30 - the texture layout is solved; only the block shading is wrong
 
 - The remaining question was what the bytes after a texture's header are. Using the layout code in
