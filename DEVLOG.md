@@ -1880,3 +1880,23 @@ private workspace.
   been tested and ruled out, which means the fix needs information not currently in the data model.
 - What is solid: geometry, scale, placement, materials, textures and lighting all work across the campaign.
   What is not: those affected surfaces, and the last level.
+
+## 2026-10-30 - boot: the engine names its own reason, and the trail to it is now accurate
+
+- The boot stall had been documented as a chain of failures ending in "Invalid device name". Probing that
+  branch found it never executes. The engine stops somewhere else, and three earlier leads were chasing a
+  path the current build does not take.
+- What the engine actually says, recovered from the strings it was formatting as it aborted: it could not
+  find an asset set called "Application". The registers at the trap held fragments of that sentence as
+  ASCII - not addresses - which is what finally made the message visible.
+- Working backwards from that message: the request itself is correct, the device name is correct, the file
+  is present, every cache file opens in the same order the original did, and all 237 lumps load from the
+  archive.
+- The failure sits in a table search that walks every entry without matching. The table is populated - it
+  holds the right device names - but several rows carry a zero instead of the flag that marks them in use,
+  so the search steps over them and reaches the end.
+- Also corrected: the device-name hook table is empty. The engine calls any registered hooks before
+  searching, and with none registered nothing is translated.
+- The level side is unchanged and healthy: ten of eleven maps render, materials and textures resolve, and
+  the cross-level texture sharing that looked suspicious turned out to be normal for the whole campaign -
+  one level acts as a shared store for the others.
