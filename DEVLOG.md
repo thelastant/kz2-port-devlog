@@ -1863,3 +1863,20 @@ private workspace.
   five-unit box cannot be level geometry, and that single measurement would have ended the detour.
 - What stands: geometry decodes correctly, mesh batches are positioned, and a level renders as a coherent
   scene. Current work moves on to materials and lighting rather than placement.
+
+## 2026-10-30 - ten of eleven levels render with textures
+
+- The camera sweep across the campaign is the first end-to-end check of the map pipeline: ten of the eleven
+  single-player levels produce geometry, textures and a rendered frame, totalling about 1.9 million
+  triangles. Texture coverage is above 90% on every level.
+- The eleventh, the short prologue, finds no geometry through the same path because its lumps are named
+  differently. That is a filtering question rather than a decoding gap, and it is recorded as such.
+- Lighting was reworked. The previous shading took the absolute value of a single light direction, which made
+  surfaces facing away from the light exactly as bright as those facing toward it and flattened every
+  silhouette. It now uses a sky-and-ground hemisphere term, so surfaces separate and shapes read.
+- One artefact remains and I am no longer treating it as cosmetic. On dense levels viewed from inside, fine
+  parallel bands fill the entire frame. The cause is known: a small set of surfaces whose texture coordinates
+  span the whole image, so the texture is stretched across each of their triangles. Eight possible causes have
+  been tested and ruled out, which means the fix needs information not currently in the data model.
+- What is solid: geometry, scale, placement, materials, textures and lighting all work across the campaign.
+  What is not: those affected surfaces, and the last level.
