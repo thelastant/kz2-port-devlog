@@ -1821,3 +1821,15 @@ private workspace.
   higher number was hiding a worse picture.
 - The remaining work is small in scope: around 90 meshes still lack a usable record, and a few
   surfaces present as spikes.
+
+## 2026-10-30 - every mesh renders, and levels generalise
+
+- Corinth River now draws 3,277 of 3,277 meshes rather than 2,831. The last ~440 were never missing:
+  the renderer was still filtering on the value that turned out not to be a position, even though
+  nothing read it any more. Deleting that check brought everything in.
+- Visari Square renders independently: 1,402 meshes inside a 642 x 934 x 334 unit extent, showing its
+  own central structure rather than Corinth River's layout. The pipeline is not tuned to one map.
+- The pattern worth keeping: after the real fix landed, the remaining "missing data" was a stale
+  validity check. When a constraint stops being used, the code that enforces it should go with it.
+- What remains is visual quality rather than structure: a few surfaces present as spikes, and there is
+  no texturing or lighting yet. Geometry, placement and scale are now measured and correct.
