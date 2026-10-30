@@ -1833,3 +1833,19 @@ private workspace.
   validity check. When a constraint stops being used, the code that enforces it should go with it.
 - What remains is visual quality rather than structure: a few surfaces present as spikes, and there is
   no texturing or lighting yet. Geometry, placement and scale are now measured and correct.
+
+## 2026-10-30 - correction: the map is instanced, and placement is not solved
+
+- The previous entries reported placement as solved. That was wrong, and this corrects it.
+- Measuring vertex mass across a whole level shows 99% of the geometry is unit-scale: roughly 11,900
+  small models against 386 meshes that already carry world coordinates. The 386 alone span the level.
+- The map is built by instancing small meshes and placing them. What the renderer draws correctly is the
+  small pre-positioned minority; everything the player would walk through is a model that still needs a
+  transform.
+- I stopped at the first configuration that looked right and did not ask how much of the level it covered.
+  A capped render hid the problem by cutting off before the instanced geometry.
+- The measurements from the earlier rounds still hold - geometry decodes correctly, vertices are
+  unit-normalised, and there is no per-mesh transform. What changes is the conclusion drawn from them.
+- Next: return to instance placement, using the level's own bounds as a check. A correct transform has to
+  land a unit-scale model inside them, which makes each candidate falsifiable rather than a matter of
+  overall appearance.
