@@ -1787,3 +1787,20 @@ private workspace.
 - Runtime tests: 102 passing
 - Recompiler tests: 23 passing
 - The port is not yet playable.
+
+## 2026-10-30 - level geometry renders for the first time
+
+- A level now renders as actual geometry rather than scattered fragments. Corinth River produces
+  342,484 triangles across 1,723 placed meshes, and the image shows walls, ground planes and
+  structures laid out along the map.
+- Two decoding defects were doing all the damage, and both were invisible from a distance.
+- First: a section shares one large vertex buffer between many meshes, and each mesh addresses a
+  small slice of it. The reader was returning the whole buffer for every mesh, so every mesh drew
+  the same low geometry. The fix keeps only the vertices each mesh actually uses.
+- Second: each mesh records its world position near the start of its own data, while an earlier pass
+  scanned backwards from the end. That works only while a mesh has a short list of parts; meshes with
+  longer lists produced nonsense positions that threw off the camera. Two meshes in nearly three
+  thousand were affected.
+- With both fixed, 87 unit tests pass and the software renderer shows recognisable level structure.
+- Still to do: about 1,200 meshes are skipped on a plausibility check, and some surfaces present as
+  spikes. Both look like per-part details rather than placement, which is now measured and working.
