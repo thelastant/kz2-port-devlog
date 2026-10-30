@@ -1,5 +1,21 @@
 # Development log
 
+## 2026-10-30 - the texture layout is solved; only the block shading is wrong
+
+- The remaining question was what the bytes after a texture's header are. Using the layout code in
+  the `ps3recomp` reference — whose own comment warns that "treating a swizzled texture as linear
+  is what produced diagonal-stripe garbage" — I tested both orderings against the same data.
+- **The answer: it is linear, not swizzled.** Decoding the first mip level as a plain block stream
+  produces a recognisable surface - panel rows, a window grid, isolated coloured marks. Swizzled,
+  the same bytes produce stripes.
+- That closes the layout question. The data begins a few bytes after a short length field, and its
+  first level is exactly the length of the top mip.
+- What is still wrong is local: my block decode gives correct shapes with wrong shading, because I
+  am reading two 16-bit words as endpoint colours and the real encoding differs. That is one small
+  decoder fix, not a search.
+- The devlog keeps score honestly: three earlier claims about this pipeline were wrong and are
+  recorded as retractions. This one has an image behind it.
+
 ## 2026-10-30 - every texture's dimensions and format now read correctly
 
 - The parser reads the real on-disc header for **all 3,028 textures** in a level: 512x512,
