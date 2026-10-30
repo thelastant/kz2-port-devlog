@@ -1900,3 +1900,23 @@ private workspace.
 - The level side is unchanged and healthy: ten of eleven maps render, materials and textures resolve, and
   the cross-level texture sharing that looked suspicious turned out to be normal for the whole campaign -
   one level acts as a shared store for the others.
+
+## 2026-10-30 - two rendering bugs fixed, and three false alarms retired
+
+- Testing levels beyond the one I had been working on turned up two real defects in the rendering path, both
+  now fixed.
+- The first: when a surface's material lived in another asset file, the renderer tried to read that file as a
+  texture instead of as a material. Every affected surface fell back to flat grey. Fixing it recovered 120
+  surfaces on one map, and large areas that had been plain grey now show wood grain and rock.
+- The second: texture coordinates were being scaled twice, once when wrapping and again when looking up the
+  pixel. That made every textured surface sample a scrambled neighbour. Correcting it reduced the pixel-to-pixel
+  variation on a large surface from 73 to 8 - the striping that had survived several rounds of investigation.
+- Three things I had reported as defects turned out not to be. Surfaces that looked green were displaying
+  green textures; the colour was in the art. A map that looked 90% grey was showing a 4,000-unit backdrop, which
+  correctly has no surface texture. And a pattern I had described as a repeating stripe for several rounds
+  turned out not to repeat at all - measuring the period showed no period.
+- One map remains unrendered. Its geometry is authored at model scale with no placement data in any form the
+  reader can find, and the reference trace available here records nothing about individual asset files. That
+  one is waiting on evidence rather than on work.
+- Every layer of the remaining pipeline is now verified: geometry, coordinates, interpolation, pixel lookup,
+  textures and shading. Ten of eleven maps draw.
