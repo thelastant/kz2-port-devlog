@@ -1,5 +1,22 @@
 # Development log
 
+## 2026-10-30 - the texture decoder was never broken
+
+- I spent the better part of a session convinced the texture decoder was wrong. It was not. It is
+  correct, and I can show it: one texture decodes to a character's face as a normal map, others to a
+  UI atlas and a greyscale mask. A wrong decoder does not produce a face.
+- The real answer came from reading a reference importer instead of trying variations. It showed the
+  header fields are plain 32-bit integers, not shifted as I had them, and that the size field is an
+  actual byte count. I checked that against 953 textures in a level and all of them match.
+- The texture I had been failing on for hours turned out to be a data texture, not a surface - its
+  colour values barely vary across four thousand blocks. I was decoding something that was never
+  meant to be an image and concluding the code was broken.
+- I also measured which sampler carries what: the diffuse sampler has 17,220 bindings and not one
+  normal map, while the normal maps are all on samplers 5 through 9. So the renderer has been picking
+  the right texture all along.
+- This closes the texture question. What remains is the magenta panels, and now that I know the
+  decoder is sound, that search is a shading question rather than a data one.
+
 ## 2026-10-30 - correction: the texture layout is not solved
 
 - Last entry said the texture layout was solved and only block shading remained. **That was wrong.**
