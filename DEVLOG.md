@@ -1,5 +1,22 @@
 # Development log
 
+## 2026-10-30 - every texture's dimensions and format now read correctly
+
+- The parser reads the real on-disc header for **all 3,028 textures** in a level: 512x512,
+  1024x1024, 256x256, 512x256 and the rest, with formats S3TC1, S3TC3, S3TC5, RGBA8888 and four
+  others. That is the first complete, checked result in this part of the work.
+- Getting there needed two corrections I had wrong twice each. The header can begin after a short
+  name reference that is written verbatim, so the fields are not at a fixed offset from the start;
+  and the first `01 05` marker I was using sits inside the header, not at its end.
+- I also found the data-length field: a three-byte big-endian count that matches the payload
+  exactly for 1,322 of 1,322 payloads of the common shape and 75 of 75 of the other.
+- **What is still open**: what the bytes after the header actually are. Decoding them as standard
+  block-compressed data gives vertical striping and endpoint colours that are far too close
+  together to be a real image. Until that is settled the renderer is not fixed, and I am not
+  going to describe it as fixed.
+- Useful paths found along the way: RPCS3 savestates contain the guest's live memory and can be
+  decompressed, and the bundled RPCS3 source describes the format.
+
 ## 2026-10-30 - the texture payload layout, measured against every texture on disc
 
 - I stopped guessing and measured. For every texture in a level, the header's size word rounded up
