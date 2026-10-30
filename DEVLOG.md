@@ -1849,3 +1849,17 @@ private workspace.
 - Next: return to instance placement, using the level's own bounds as a check. A correct transform has to
   land a unit-scale model inside them, which makes each candidate falsifiable rather than a matter of
   overall appearance.
+
+## 2026-10-30 - the level was already rendering correctly
+
+- Several entries spent effort on instance placement. Measuring the two populations of geometry shows
+  that work was solving a problem that did not exist.
+- A level holds about 13,000 small meshes that all sit inside a five-unit box at the origin. They are
+  model templates, not placed geometry. The level itself is 92 mesh batches that carry world coordinates
+  and span roughly three thousand units.
+- The render that had already been working was drawing exactly those 92 batches. Nothing was missing and
+  nothing needed a transform.
+- The mistake was counting vertices without checking where they were. A population that occupies a
+  five-unit box cannot be level geometry, and that single measurement would have ended the detour.
+- What stands: geometry decodes correctly, mesh batches are positioned, and a level renders as a coherent
+  scene. Current work moves on to materials and lighting rather than placement.
